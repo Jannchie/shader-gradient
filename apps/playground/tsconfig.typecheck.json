@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@shader-gradient/core": ["../../packages/core/src/index.ts"],
+      "@shader-gradient/react": ["../../packages/react/src/index.tsx"],
+      "@shader-gradient/vue": ["../../packages/vue/src/index.ts"]
+    }
+  }
+}

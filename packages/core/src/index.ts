@@ -1,0 +1,17 @@
+export { DEFAULT_OPTIONS } from './defaults'
+export { presetEntries, presets } from './presets'
+export { parseShaderGradientQuery, resolveShaderGradientOptions, serializeShaderGradientOptions } from './query'
+export { ShaderGradient, ShaderGradientRenderer } from './ShaderGradient'
+export type {
+  EnvironmentPreset,
+  LightType,
+  MeshType,
+  ShaderName,
+  ShaderControlMode,
+  ShaderGradientCameraUpdate,
+  ShaderGradientInput,
+  ShaderGradientOptions,
+  ShaderGradientPreset,
+  ShaderGradientPresetName,
+  ToggleState,
+} from './types'

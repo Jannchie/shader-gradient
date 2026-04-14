@@ -1,0 +1,49 @@
+{
+  "name": "@shader-gradient/vue",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Vue bindings for @shader-gradient/core",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "keywords": [
+    "shader",
+    "gradient",
+    "vue",
+    "three",
+    "webgl",
+    "animation",
+    "background"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.typecheck.json"
+  },
+  "dependencies": {
+    "@shader-gradient/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.1.10"
+  }
+}
