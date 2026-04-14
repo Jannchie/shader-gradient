@@ -16,11 +16,20 @@ const officialCompareRef = ref<HTMLElement>()
 let gradient: ShaderGradient | null = null
 let officialRoot: Root | null = null
 const transitionReady = ref(false)
+const hasInitialQuery =
+  typeof window !== 'undefined' &&
+  window.location.search.trim() !== '' &&
+  window.location.search.trim() !== '?'
 
 const queryInput =
-  typeof window === 'undefined'
+  !hasInitialQuery
     ? {}
     : parseShaderGradientQuery(window.location.search)
+
+const initialPreset =
+  queryInput.preset && presets[queryInput.preset as keyof typeof presets]
+    ? (queryInput.preset as keyof typeof presets)
+    : 'halo'
 
 const queryPreset =
   queryInput.preset && presets[queryInput.preset as keyof typeof presets]
@@ -28,13 +37,13 @@ const queryPreset =
     : {}
 
 const state = reactive({
-  preset: 'halo' as string,
+  preset: initialPreset as string,
   pixelDensity: 1.5,
   enableTransition: true,
   smoothTime: 0.18,
   enableCameraControls: true,
   enableCameraUpdate: false,
-  ...presets.halo.props,
+  ...presets[initialPreset].props,
   ...queryPreset,
   ...queryInput,
 })
@@ -44,8 +53,8 @@ const copied = ref(false)
 const exportMode = ref<'url' | 'react' | 'vue' | 'core'>('url')
 const queryString = computed(() => serializeShaderGradientOptions(state))
 const shareUrl = computed(() => {
-  if (typeof window === 'undefined') return `?${queryString.value}`
-  return `${window.location.origin}${window.location.pathname}?${queryString.value}`
+  if (typeof window === 'undefined') return queryString.value
+  return `${window.location.origin}${window.location.pathname}${queryString.value}`
 })
 const runtimeState = computed(() => ({
   ...state,
@@ -81,7 +90,7 @@ watch(state, () => {
   officialRoot?.render(React.createElement(OfficialPreview, { state: { ...runtimeState.value } }))
 
   if (typeof window !== 'undefined') {
-    window.history.replaceState(null, '', `?${queryString.value}`)
+    window.history.replaceState(null, '', queryString.value)
   }
 }, { deep: true })
 
