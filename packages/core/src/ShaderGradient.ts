@@ -220,7 +220,20 @@ export class ShaderGradient {
     this.syncRendererState()
     this.syncLighting()
     this.syncAxisHelper()
-    this.syncCameraControls(this.options.enableTransition)
+
+    const cameraChanged =
+      previous.cAzimuthAngle !== next.cAzimuthAngle ||
+      previous.cPolarAngle !== next.cPolarAngle ||
+      previous.cDistance !== next.cDistance ||
+      previous.cameraZoom !== next.cameraZoom ||
+      previous.zoomOut !== next.zoomOut ||
+      previous.type !== next.type ||
+      previous.enableCameraControls !== next.enableCameraControls ||
+      previous.enableCameraUpdate !== next.enableCameraUpdate
+    if (cameraChanged) {
+      this.syncCameraControls(this.options.enableTransition)
+    }
+
     this.applyCurrentState()
   }
 
@@ -296,6 +309,8 @@ export class ShaderGradient {
     })
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.currentOptions.pixelDensity))
     this.renderer.setSize(width, height)
+    this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace
+    this.renderer.toneMapping = THREE.NoToneMapping
     this.renderer.domElement.style.display = 'block'
     this.renderer.domElement.style.width = '100%'
     this.renderer.domElement.style.height = '100%'

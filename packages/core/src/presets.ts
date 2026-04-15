@@ -6,6 +6,7 @@ export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
     color: 'white',
     props: {
       type: 'plane',
+      shader: 'defaults',
       animate: 'on',
       uTime: 0,
       uSpeed: 0.4,
@@ -41,6 +42,7 @@ export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
     color: 'white',
     props: {
       type: 'sphere',
+      shader: 'defaults',
       animate: 'on',
       uTime: 0,
       uSpeed: 0.3,
@@ -73,6 +75,7 @@ export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
     color: 'white',
     props: {
       type: 'waterPlane',
+      shader: 'defaults',
       animate: 'on',
       uTime: 0,
       uSpeed: 0.2,
@@ -105,6 +108,7 @@ export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
     color: 'white',
     props: {
       type: 'sphere',
+      shader: 'defaults',
       animate: 'on',
       uTime: 0,
       uSpeed: 0.3,
@@ -137,6 +141,7 @@ export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
     color: 'white',
     props: {
       type: 'waterPlane',
+      shader: 'defaults',
       animate: 'on',
       uTime: 8,
       uSpeed: 0.3,
@@ -169,6 +174,7 @@ export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
     color: 'white',
     props: {
       type: 'sphere',
+      shader: 'defaults',
       animate: 'on',
       uTime: 0,
       uSpeed: 0.1,
@@ -201,6 +207,7 @@ export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
     color: 'white',
     props: {
       type: 'waterPlane',
+      shader: 'defaults',
       animate: 'on',
       uTime: 0.2,
       uSpeed: 0.1,
@@ -233,6 +240,7 @@ export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
     color: 'white',
     props: {
       type: 'sphere',
+      shader: 'defaults',
       animate: 'on',
       uTime: 0,
       uSpeed: 0.1,
@@ -265,6 +273,7 @@ export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
     color: 'white',
     props: {
       type: 'waterPlane',
+      shader: 'defaults',
       animate: 'on',
       uTime: 0.2,
       uSpeed: 0.2,
@@ -297,6 +306,7 @@ export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
     color: 'white',
     props: {
       type: 'waterPlane',
+      shader: 'defaults',
       animate: 'on',
       uTime: 0.2,
       uSpeed: 0.3,

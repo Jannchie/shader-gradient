@@ -42,7 +42,7 @@ const state = reactive({
   enableTransition: true,
   smoothTime: 0.18,
   enableCameraControls: true,
-  enableCameraUpdate: false,
+  enableCameraUpdate: true,
   ...presets[initialPreset].props,
   ...queryPreset,
   ...queryInput,
@@ -68,9 +68,16 @@ const exportModes = [
   { key: 'core', label: 'Core TS' },
 ] as const
 
+function onCameraUpdate(updates: { cAzimuthAngle: number; cPolarAngle: number; cDistance: number; cameraZoom: number }) {
+  state.cAzimuthAngle = updates.cAzimuthAngle
+  state.cPolarAngle = updates.cPolarAngle
+  state.cDistance = updates.cDistance
+  state.cameraZoom = updates.cameraZoom
+}
+
 onMounted(() => {
   if (canvasRef.value) {
-    gradient = new ShaderGradient(canvasRef.value, { ...runtimeState.value })
+    gradient = new ShaderGradient(canvasRef.value, { ...runtimeState.value, onCameraUpdate })
   }
 
   if (officialCompareRef.value) {
@@ -86,7 +93,7 @@ onMounted(() => {
 })
 
 watch(state, () => {
-  gradient?.update({ ...runtimeState.value })
+  gradient?.update({ ...runtimeState.value, onCameraUpdate })
   officialRoot?.render(React.createElement(OfficialPreview, { state: { ...runtimeState.value } }))
 
   if (typeof window !== 'undefined') {
