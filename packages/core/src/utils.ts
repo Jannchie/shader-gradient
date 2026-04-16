@@ -29,6 +29,23 @@ export function hexToRgb(hex: string): [number, number, number] {
   ]
 }
 
+export function hexToRgb255(hex: string): { r: number; g: number; b: number } {
+  const normalized = hex.trim().replace('#', '')
+  const value =
+    normalized.length === 3
+      ? normalized
+          .split('')
+          .map((char) => char + char)
+          .join('')
+      : normalized
+
+  return {
+    r: parseInt(value.slice(0, 2), 16),
+    g: parseInt(value.slice(2, 4), 16),
+    b: parseInt(value.slice(4, 6), 16),
+  }
+}
+
 export function rgbToHex([r, g, b]: [number, number, number]): string {
   return `#${[r, g, b]
     .map((value) => Math.round(clamp(value, 0, 1) * 255).toString(16).padStart(2, '0'))

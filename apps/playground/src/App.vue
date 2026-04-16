@@ -435,6 +435,7 @@ const gradient = new ShaderGradient(container, gradientOptions)
                   <option value="positionMix">positionMix</option>
                   <option value="cosmic">cosmic</option>
                   <option value="glass">glass</option>
+                  <option value="lava">lava</option>
                 </select>
               </div>
             </div>

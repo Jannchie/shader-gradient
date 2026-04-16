@@ -8,6 +8,15 @@ export default defineConfig({
   plugins: [react(), vue()],
   resolve: {
     alias: {
+      '@shader-gradient/core': fileURLToPath(
+        new URL('../../packages/core/src/index.ts', import.meta.url),
+      ),
+      '@shader-gradient/react': fileURLToPath(
+        new URL('../../packages/react/src/index.tsx', import.meta.url),
+      ),
+      '@shader-gradient/vue': fileURLToPath(
+        new URL('../../packages/vue/src/index.ts', import.meta.url),
+      ),
       react: fileURLToPath(new URL('./node_modules/react', import.meta.url)),
       'react-dom': fileURLToPath(new URL('./node_modules/react-dom', import.meta.url)),
       '@react-three/fiber': fileURLToPath(

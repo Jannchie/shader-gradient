@@ -4,11 +4,12 @@ export type RangeState = 'enabled' | 'disabled'
 export type ShaderControlMode = 'props' | 'query'
 export type LightType = '3d' | 'env'
 export type EnvironmentPreset = 'city' | 'dawn' | 'lobby'
-export type ShaderName = 'defaults' | 'positionMix' | 'cosmic' | 'glass'
+export type ShaderName = 'defaults' | 'positionMix' | 'cosmic' | 'glass' | 'lava'
 
 export type ShaderGradientPresetName =
   | 'halo'
   | 'pensive'
+  | 'neutronStar'
   | 'mint'
   | 'interstella'
   | 'nightyNight'
@@ -17,6 +18,7 @@ export type ShaderGradientPresetName =
   | 'sunset'
   | 'mandarin'
   | 'cottonCandy'
+  | 'lavaFlow'
 
 export interface ShaderGradientCameraUpdate {
   cAzimuthAngle: number

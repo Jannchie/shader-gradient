@@ -4,7 +4,7 @@ import type { ShaderGradientInput, ShaderGradientOptions, ShaderName } from './t
 import { clamp, formatUrlString, parseBoolean, parseNumber, parseRangeState, parseToggle } from './utils'
 
 const KNOWN_PRESETS = new Set(Object.keys(presets))
-const KNOWN_SHADERS = new Set<ShaderName>(['defaults', 'positionMix', 'cosmic', 'glass'])
+const KNOWN_SHADERS = new Set<ShaderName>(['defaults', 'positionMix', 'cosmic', 'glass', 'lava'])
 
 type QueryValue = string | number | boolean
 
