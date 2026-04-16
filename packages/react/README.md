@@ -13,7 +13,7 @@ npm install @shader-gradient/react react react-dom
 ## Usage
 
 ```tsx
-import { ShaderGradientCanvas, ShaderGradient } from '@shader-gradient/react'
+import { ShaderGradient, ShaderGradientCanvas } from '@shader-gradient/react'
 
 export function HeroGradient() {
   return (

@@ -1,22 +1,14 @@
-import { ShaderGradient as CoreShaderGradient } from '@shader-gradient/core'
 import type {
   EnvironmentPreset,
   LightType,
   MeshType,
   ShaderGradientCameraUpdate,
   ShaderGradientInput,
-  ShaderGradientOptions,
   ShaderGradientPresetName,
   ToggleState,
 } from '@shader-gradient/core'
-import {
-  DEFAULT_OPTIONS,
-  parseShaderGradientQuery,
-  presetEntries,
-  presets,
-  resolveShaderGradientOptions,
-  serializeShaderGradientOptions,
-} from '@shader-gradient/core'
+import type { PropType } from 'vue'
+import { ShaderGradient as CoreShaderGradient } from '@shader-gradient/core'
 import {
   computed,
   defineComponent,
@@ -24,7 +16,6 @@ import {
   inject,
   onBeforeUnmount,
   onMounted,
-  PropType,
   provide,
   ref,
   shallowRef,
@@ -32,12 +23,16 @@ import {
   watchEffect,
 } from 'vue'
 
-type CanvasContextValue = {
+interface CanvasContextValue {
   container: ReturnType<typeof shallowRef<HTMLDivElement | null>>
   defaults: { value: Pick<ShaderGradientInput, 'pixelDensity' | 'fov' | 'preserveDrawingBuffer' | 'powerPreference'> }
 }
 
 const CONTEXT_KEY = Symbol('shader-gradient-canvas')
+
+function renderNothing() {
+  return null
+}
 
 const shaderGradientProps = {
   preset: String as PropType<ShaderGradientPresetName>,
@@ -149,7 +144,9 @@ export const ShaderGradientCanvas = defineComponent({
     provide<CanvasContextValue>(CONTEXT_KEY, { container, defaults })
 
     onMounted(() => {
-      if (!props.lazyLoad || !container.value) return
+      if (!props.lazyLoad || !container.value) {
+        return
+      }
 
       observer = new IntersectionObserver(
         ([entry]) => {
@@ -202,7 +199,9 @@ export const ShaderGradient = defineComponent({
     watch(
       () => context.container.value,
       (container, _, onCleanup) => {
-        if (!container) return
+        if (!container) {
+          return
+        }
 
         const created = new CoreShaderGradient(container, {
           ...context.defaults.value,
@@ -221,18 +220,19 @@ export const ShaderGradient = defineComponent({
     )
 
     watchEffect(() => {
-      if (!instance.value) return
+      if (!instance.value) {
+        return
+      }
       instance.value.update({
         ...context.defaults.value,
         ...toInput(props),
       })
     })
 
-    return () => null
+    return renderNothing
   },
 })
 
-export type { ShaderGradientInput, ShaderGradientOptions }
 export {
   DEFAULT_OPTIONS,
   parseShaderGradientQuery,
@@ -240,4 +240,6 @@ export {
   presets,
   resolveShaderGradientOptions,
   serializeShaderGradientOptions,
-}
+} from '@shader-gradient/core'
+
+export type { ShaderGradientInput, ShaderGradientOptions } from '@shader-gradient/core'

@@ -1,17 +1,25 @@
 import { ShaderGradient, ShaderGradientCanvas } from '@shadergradient/react'
 
-type OfficialPreviewProps = {
+interface OfficialPreviewProps {
   state: Record<string, unknown>
 }
 
-const toOnOff = (value: unknown): 'on' | 'off' => {
-  if (value === 'off' || value === false || value === 0) return 'off'
-  if (value === 'on' || value === true) return 'on'
+function toOnOff(value: unknown): 'on' | 'off' {
+  if (value === 'off' || value === false || value === 0) {
+    return 'off'
+  }
+  if (value === 'on' || value === true) {
+    return 'on'
+  }
   return value ? 'on' : 'off'
 }
-const toEnabledDisabled = (value: unknown): 'enabled' | 'disabled' => {
-  if (value === 'disabled' || value === false || value === 0) return 'disabled'
-  if (value === 'enabled' || value === true) return 'enabled'
+function toEnabledDisabled(value: unknown): 'enabled' | 'disabled' {
+  if (value === 'disabled' || value === false || value === 0) {
+    return 'disabled'
+  }
+  if (value === 'enabled' || value === true) {
+    return 'enabled'
+  }
   return value ? 'enabled' : 'disabled'
 }
 

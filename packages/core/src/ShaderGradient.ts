@@ -1,3 +1,8 @@
+import type {
+  WebGLRenderTarget,
+} from 'three'
+import type { MeshType, ShaderGradientInput, ShaderGradientOptions } from './types'
+import CameraControls from 'camera-controls'
 import * as THREE from 'three'
 import {
   AmbientLight,
@@ -14,18 +19,15 @@ import {
   ShaderChunk,
   Vector2,
   WebGLRenderer,
-  WebGLRenderTarget,
 } from 'three'
-import CameraControls from 'camera-controls'
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import * as officialShaders from './official-shaders'
 import { HALFTONE_SHADER } from './postprocessing/halftoneShader'
 import { resolveShaderGradientOptions } from './query'
-import type { MeshType, ShaderGradientInput, ShaderGradientOptions } from './types'
 import { damp, dampColor, degToRad, hexToRgb, radToDeg, rgbToHex } from './utils'
 
 type ShaderUniforms = Record<string, { value: unknown }>
@@ -82,17 +84,20 @@ function ensureShaderChunkCompat(): void {
 
 function createGeometry(type: MeshType) {
   switch (type) {
-    case 'sphere':
+    case 'sphere': {
       return new IcosahedronGeometry(1, 64)
-    case 'waterPlane':
+    }
+    case 'waterPlane': {
       return new PlaneGeometry(10, 10, 192, 192)
-    default:
+    }
+    default: {
       return new PlaneGeometry(10, 10, 1, 192)
+    }
   }
 }
 
 function getShaderProgram(shader: ShaderGradientOptions['shader'], type: MeshType) {
-  const family = officialShaders[shader] as Record<MeshType, { vertex: string; fragment: string }>
+  const family = officialShaders[shader] as Record<MeshType, { vertex: string, fragment: string }>
   return family[type]
 }
 
@@ -104,7 +109,9 @@ function loadEnvironmentTarget(
   const base = basePath.endsWith('/') ? basePath : `${basePath}/`
   const url = `${base}${ENVIRONMENT_FILES[preset]}`
   const cached = environmentCache.get(url)
-  if (cached) return cached
+  if (cached) {
+    return cached
+  }
 
   const next = new Promise<WebGLRenderTarget>((resolve, reject) => {
     new RGBELoader().load(
@@ -197,11 +204,11 @@ export class ShaderGradient {
     const previous = this.options
     this.options = next
 
-    const requiresRebuild =
-      previous.type !== next.type ||
-      previous.shader !== next.shader ||
-      previous.preserveDrawingBuffer !== next.preserveDrawingBuffer ||
-      previous.powerPreference !== next.powerPreference
+    const requiresRebuild
+      = previous.type !== next.type
+      || previous.shader !== next.shader
+      || previous.preserveDrawingBuffer !== next.preserveDrawingBuffer
+      || previous.powerPreference !== next.powerPreference
 
     if (!next.enableTransition) {
       this.currentOptions = { ...next }
@@ -221,15 +228,15 @@ export class ShaderGradient {
     this.syncLighting()
     this.syncAxisHelper()
 
-    const cameraChanged =
-      previous.cAzimuthAngle !== next.cAzimuthAngle ||
-      previous.cPolarAngle !== next.cPolarAngle ||
-      previous.cDistance !== next.cDistance ||
-      previous.cameraZoom !== next.cameraZoom ||
-      previous.zoomOut !== next.zoomOut ||
-      previous.type !== next.type ||
-      previous.enableCameraControls !== next.enableCameraControls ||
-      previous.enableCameraUpdate !== next.enableCameraUpdate
+    const cameraChanged
+      = previous.cAzimuthAngle !== next.cAzimuthAngle
+      || previous.cPolarAngle !== next.cPolarAngle
+      || previous.cDistance !== next.cDistance
+      || previous.cameraZoom !== next.cameraZoom
+      || previous.zoomOut !== next.zoomOut
+      || previous.type !== next.type
+      || previous.enableCameraControls !== next.enableCameraControls
+      || previous.enableCameraUpdate !== next.enableCameraUpdate
     if (cameraChanged) {
       this.syncCameraControls(this.options.enableTransition)
     }
@@ -299,7 +306,9 @@ export class ShaderGradient {
   private initScene(): void {
     const width = this.container.clientWidth
     const height = this.container.clientHeight
-    if (!width || !height) return
+    if (!width || !height) {
+      return
+    }
 
     this.renderer = new WebGLRenderer({
       antialias: true,
@@ -321,7 +330,7 @@ export class ShaderGradient {
     this.clock = new Clock()
     this.pmremGenerator = new PMREMGenerator(this.renderer)
 
-    this.ambientLight = new AmbientLight(0xffffff, 0)
+    this.ambientLight = new AmbientLight(0xFF_FF_FF, 0)
     this.scene.add(this.ambientLight)
 
     this.mountMesh()
@@ -348,7 +357,8 @@ export class ShaderGradient {
       this.applyCurrentState()
       if (this.composer) {
         this.composer.render(delta)
-      } else {
+      }
+      else {
         this.renderer?.render(this.scene!, this.camera!)
       }
     }
@@ -357,7 +367,9 @@ export class ShaderGradient {
   }
 
   private mountMesh(): void {
-    if (!this.scene) return
+    if (!this.scene) {
+      return
+    }
 
     const geometry = createGeometry(this.options.type)
     const material = createMaterial(this.options)
@@ -463,7 +475,9 @@ export class ShaderGradient {
   }
 
   private applyCurrentState(): void {
-    if (!this.mesh || !this.camera) return
+    if (!this.mesh || !this.camera) {
+      return
+    }
 
     this.syncClock()
     this.syncPostProcessing()
@@ -510,17 +524,23 @@ export class ShaderGradient {
       this.shaderUniforms.uC3r.value = this.currentColors.color3[0]
       this.shaderUniforms.uC3g.value = this.currentColors.color3[1]
       this.shaderUniforms.uC3b.value = this.currentColors.color3[2]
-      if (this.shaderUniforms.uColor1) this.shaderUniforms.uColor1.value = new THREE.Color(this.currentOptions.color1)
-      if (this.shaderUniforms.uColor2) this.shaderUniforms.uColor2.value = new THREE.Color(this.currentOptions.color2)
-      if (this.shaderUniforms.uColor3) this.shaderUniforms.uColor3.value = new THREE.Color(this.currentOptions.color3)
+      if (this.shaderUniforms.uColor1) {
+        this.shaderUniforms.uColor1.value = new THREE.Color(this.currentOptions.color1)
+      }
+      if (this.shaderUniforms.uColor2) {
+        this.shaderUniforms.uColor2.value = new THREE.Color(this.currentOptions.color2)
+      }
+      if (this.shaderUniforms.uColor3) {
+        this.shaderUniforms.uColor3.value = new THREE.Color(this.currentOptions.color3)
+      }
     }
 
     this.camera.fov = this.currentOptions.fov
     this.camera.updateProjectionMatrix()
 
     if (this.ambientLight) {
-      this.ambientLight.intensity =
-        this.currentOptions.lightType === '3d' ? this.currentOptions.brightness * Math.PI : 0.4
+      this.ambientLight.intensity
+        = this.currentOptions.lightType === '3d' ? this.currentOptions.brightness * Math.PI : 0.4
     }
 
     if (this.grainPass) {
@@ -531,7 +551,9 @@ export class ShaderGradient {
   }
 
   private syncRendererState(): void {
-    if (!this.renderer || !this.camera) return
+    if (!this.renderer || !this.camera) {
+      return
+    }
 
     const pixelRatio = Math.min(window.devicePixelRatio, this.currentOptions.pixelDensity)
     this.renderer.setPixelRatio(pixelRatio)
@@ -541,7 +563,9 @@ export class ShaderGradient {
   }
 
   private syncLighting(): void {
-    if (!this.scene || !this.pmremGenerator) return
+    if (!this.scene || !this.pmremGenerator) {
+      return
+    }
 
     if (this.options.lightType === 'env') {
       const environmentKey = `${this.options.envBasePath}|${this.options.envPreset}`
@@ -554,12 +578,16 @@ export class ShaderGradient {
       const requestId = ++this.environmentRequestId
       loadEnvironmentTarget(this.pmremGenerator, this.options.envBasePath, this.options.envPreset)
         .then((target) => {
-          if (!this.scene || requestId !== this.environmentRequestId || this.options.lightType !== 'env') return
+          if (!this.scene || requestId !== this.environmentRequestId || this.options.lightType !== 'env') {
+            return
+          }
           this.environmentTarget = target
           this.scene.environment = target.texture
         })
         .catch(() => {
-          if (!this.scene || requestId !== this.environmentRequestId) return
+          if (!this.scene || requestId !== this.environmentRequestId) {
+            return
+          }
           this.scene.environment = null
         })
       return
@@ -571,7 +599,9 @@ export class ShaderGradient {
   }
 
   private syncAxisHelper(): void {
-    if (!this.scene) return
+    if (!this.scene) {
+      return
+    }
 
     if (this.options.toggleAxis && !this.axisHelper) {
       this.axisHelper = new AxesHelper(3)
@@ -585,7 +615,9 @@ export class ShaderGradient {
   }
 
   private syncPostProcessing(): void {
-    if (!this.renderer || !this.scene || !this.camera) return
+    if (!this.renderer || !this.scene || !this.camera) {
+      return
+    }
 
     const width = this.container.clientWidth
     const height = this.container.clientHeight
@@ -626,18 +658,26 @@ export class ShaderGradient {
   }
 
   private syncClock(): void {
-    if (!this.clock) return
-
-    if (this.currentOptions.animate) {
-      if (!this.clock.running) this.clock.start()
+    if (!this.clock) {
       return
     }
 
-    if (this.clock.running) this.clock.stop()
+    if (this.currentOptions.animate) {
+      if (!this.clock.running) {
+        this.clock.start()
+      }
+      return
+    }
+
+    if (this.clock.running) {
+      this.clock.stop()
+    }
   }
 
   private syncCameraControls(shouldTransition: boolean): void {
-    if (!this.camera || !this.renderer) return
+    if (!this.camera || !this.renderer) {
+      return
+    }
 
     if (!this.cameraControls) {
       const controls = new CameraControls(this.camera, this.renderer.domElement)
@@ -655,12 +695,12 @@ export class ShaderGradient {
     this.cameraControls.dollySpeed = 5
     this.cameraControls.maxDistance = 1000
     this.cameraControls.restThreshold = 0.01
-    this.cameraControls.mouseButtons.middle =
-      this.options.type === 'sphere'
+    this.cameraControls.mouseButtons.middle
+      = this.options.type === 'sphere'
         ? (CameraControls as any).ACTION.ZOOM
         : (CameraControls as any).ACTION.DOLLY
-    this.cameraControls.mouseButtons.wheel =
-      this.options.type === 'sphere'
+    this.cameraControls.mouseButtons.wheel
+      = this.options.type === 'sphere'
         ? (CameraControls as any).ACTION.ZOOM
         : (CameraControls as any).ACTION.DOLLY
 
@@ -674,7 +714,8 @@ export class ShaderGradient {
       if (this.options.type === 'sphere') {
         this.cameraControls.dollyTo(ZOOM_OUT_SPHERE.distance, shouldTransition)
         this.cameraControls.zoomTo(ZOOM_OUT_SPHERE.zoom, shouldTransition)
-      } else {
+      }
+      else {
         this.cameraControls.dollyTo(ZOOM_OUT_PLANES.distance, shouldTransition)
         this.cameraControls.zoomTo(ZOOM_OUT_PLANES.zoom, shouldTransition)
       }
@@ -714,10 +755,14 @@ export class ShaderGradient {
   }
 
   private getAnimatedTime(): number {
-    if (!this.clock) return this.currentOptions.uTime
-    if (!this.currentOptions.animate) return this.currentOptions.uTime
+    if (!this.clock) {
+      return this.currentOptions.uTime
+    }
+    if (!this.currentOptions.animate) {
+      return this.currentOptions.uTime
+    }
 
-    let elapsed = this.clock.getElapsedTime()
+    const elapsed = this.clock.getElapsedTime()
 
     if (this.currentOptions.loop && Number.isFinite(this.currentOptions.loopDuration) && this.currentOptions.loopDuration > 0) {
       return elapsed % this.currentOptions.loopDuration
@@ -745,7 +790,9 @@ export class ShaderGradient {
   private handleResize(): void {
     const width = this.container.clientWidth
     const height = this.container.clientHeight
-    if (!width || !height) return
+    if (!width || !height) {
+      return
+    }
 
     if (!this.renderer) {
       this.initScene()

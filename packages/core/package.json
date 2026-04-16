@@ -1,12 +1,9 @@
 {
   "name": "@shader-gradient/core",
-  "version": "0.1.0",
   "type": "module",
-  "license": "MIT",
+  "version": "0.1.0",
   "description": "Framework-agnostic animated shader gradients powered by Three.js",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "license": "MIT",
   "keywords": [
     "shader",
     "gradient",
@@ -24,9 +21,12 @@
       "require": "./dist/index.cjs"
     }
   },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "dist",
-    "README.md"
+    "README.md",
+    "dist"
   ],
   "publishConfig": {
     "access": "public"

@@ -14,7 +14,7 @@ npm install @shader-gradient/vue vue
 
 ```vue
 <script setup lang="ts">
-import { ShaderGradientCanvas, ShaderGradient } from '@shader-gradient/vue'
+import { ShaderGradient, ShaderGradientCanvas } from '@shader-gradient/vue'
 </script>
 
 <template>

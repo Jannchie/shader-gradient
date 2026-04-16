@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import React from 'react'
-import { ref, reactive, computed, onMounted, watch, onBeforeUnmount } from 'vue'
-import { createRoot, type Root } from 'react-dom/client'
+import type { Root } from 'react-dom/client'
 import {
   parseShaderGradientQuery,
-  ShaderGradient,
   presetEntries,
   presets,
   serializeShaderGradientOptions,
+  ShaderGradient,
 } from '@shader-gradient/core'
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { OfficialPreview } from './previews/OfficialPreview'
 
 const canvasRef = ref<HTMLElement>()
@@ -16,23 +17,23 @@ const officialCompareRef = ref<HTMLElement>()
 let gradient: ShaderGradient | null = null
 let officialRoot: Root | null = null
 const transitionReady = ref(false)
-const hasInitialQuery =
-  typeof window !== 'undefined' &&
-  window.location.search.trim() !== '' &&
-  window.location.search.trim() !== '?'
+const hasInitialQuery
+  = globalThis.window !== undefined
+  && globalThis.location.search.trim() !== ''
+  && globalThis.location.search.trim() !== '?'
 
-const queryInput =
-  !hasInitialQuery
-    ? {}
-    : parseShaderGradientQuery(window.location.search)
+const queryInput
+  = hasInitialQuery
+    ? parseShaderGradientQuery(globalThis.location.search)
+    : {}
 
-const initialPreset =
-  queryInput.preset && presets[queryInput.preset as keyof typeof presets]
+const initialPreset
+  = queryInput.preset && presets[queryInput.preset as keyof typeof presets]
     ? (queryInput.preset as keyof typeof presets)
     : 'halo'
 
-const queryPreset =
-  queryInput.preset && presets[queryInput.preset as keyof typeof presets]
+const queryPreset
+  = queryInput.preset && presets[queryInput.preset as keyof typeof presets]
     ? presets[queryInput.preset as keyof typeof presets].props
     : {}
 
@@ -53,8 +54,10 @@ const copied = ref(false)
 const exportMode = ref<'url' | 'react' | 'vue' | 'core'>('url')
 const queryString = computed(() => serializeShaderGradientOptions(state))
 const shareUrl = computed(() => {
-  if (typeof window === 'undefined') return queryString.value
-  return `${window.location.origin}${window.location.pathname}${queryString.value}`
+  if (globalThis.window === undefined) {
+    return queryString.value
+  }
+  return `${globalThis.location.origin}${globalThis.location.pathname}${queryString.value}`
 })
 const runtimeState = computed(() => ({
   ...state,
@@ -68,7 +71,7 @@ const exportModes = [
   { key: 'core', label: 'Core TS' },
 ] as const
 
-function onCameraUpdate(updates: { cAzimuthAngle: number; cPolarAngle: number; cDistance: number; cameraZoom: number }) {
+function onCameraUpdate(updates: { cAzimuthAngle: number, cPolarAngle: number, cDistance: number, cameraZoom: number }) {
   state.cAzimuthAngle = updates.cAzimuthAngle
   state.cPolarAngle = updates.cPolarAngle
   state.cDistance = updates.cDistance
@@ -96,8 +99,8 @@ watch(state, () => {
   gradient?.update({ ...runtimeState.value, onCameraUpdate })
   officialRoot?.render(React.createElement(OfficialPreview, { state: { ...runtimeState.value } }))
 
-  if (typeof window !== 'undefined') {
-    window.history.replaceState(null, '', queryString.value)
+  if (globalThis.window !== undefined) {
+    globalThis.history.replaceState(null, '', queryString.value)
   }
 }, { deep: true })
 
@@ -108,8 +111,12 @@ onBeforeUnmount(() => {
 })
 
 function toBool(val: unknown): boolean {
-  if (val === 'on') return true
-  if (val === 'off') return false
+  if (val === 'on') {
+    return true
+  }
+  if (val === 'off') {
+    return false
+  }
   return Boolean(val)
 }
 
@@ -145,18 +152,13 @@ function setCheck(key: string, e: Event) {
   ;(state as Record<string, unknown>)[key] = checked
 }
 
-function copyQuery() {
-  navigator.clipboard.writeText(exportContent.value).then(() => {
-    copied.value = true
-    setTimeout(() => {
-      copied.value = false
-    }, 1500)
-  })
-}
-
 function formatLiteral(value: unknown): string {
-  if (typeof value === 'string') return JSON.stringify(value)
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  if (typeof value === 'string') {
+    return JSON.stringify(value)
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
   return JSON.stringify(value)
 }
 
@@ -164,7 +166,9 @@ function formatObjectLiteral(input: Record<string, unknown>, indent = 2): string
   const space = ' '.repeat(indent)
   const entries = Object.entries(input)
 
-  if (!entries.length) return '{}'
+  if (entries.length === 0) {
+    return '{}'
+  }
 
   return `{\n${entries
     .map(([key, value]) => `${space}${key}: ${formatLiteral(value)},`)
@@ -174,7 +178,7 @@ function formatObjectLiteral(input: Record<string, unknown>, indent = 2): string
 function pickState(keys: readonly string[]): Record<string, unknown> {
   return Object.fromEntries(
     keys
-      .map((key) => [key, (state as Record<string, unknown>)[key]])
+      .map(key => [key, (state as Record<string, unknown>)[key]])
       .filter(([, value]) => value !== undefined),
   )
 }
@@ -306,9 +310,9 @@ const gradientProps = ${formatObjectLiteral(gradientExportProps.value)}
   return `import { ShaderGradient } from '@shader-gradient/core'
 
 const gradientOptions = ${formatObjectLiteral({
-    ...canvasExportProps.value,
-    ...gradientExportProps.value,
-  })}
+  ...canvasExportProps.value,
+  ...gradientExportProps.value,
+})}
 
 const container = document.getElementById('shader-gradient')
 
@@ -321,16 +325,30 @@ const gradient = new ShaderGradient(container, gradientOptions)
 // Later:
 // gradient.dispose()`
 })
+
+function copyQuery() {
+  navigator.clipboard.writeText(exportContent.value).then(() => {
+    copied.value = true
+    setTimeout(() => {
+      copied.value = false
+    }, 1500)
+  })
+}
 </script>
 
 <template>
   <div class="app">
-    <div ref="canvasRef" class="gradient-bg" />
+    <div
+      ref="canvasRef"
+      class="gradient-bg"
+    />
 
     <section class="compare-dock">
       <header class="compare-header">
         <div>
-          <p class="compare-kicker">Preset Compare</p>
+          <p class="compare-kicker">
+            Preset Compare
+          </p>
           <h2>Official vs Local</h2>
         </div>
         <p class="compare-note">
@@ -340,7 +358,10 @@ const gradient = new ShaderGradient(container, gradientOptions)
       </header>
       <div class="compare-grid">
         <div class="compare-preview-block">
-          <div ref="officialCompareRef" class="official-preview" />
+          <div
+            ref="officialCompareRef"
+            class="official-preview"
+          />
         </div>
       </div>
     </section>
@@ -348,6 +369,7 @@ const gradient = new ShaderGradient(container, gradientOptions)
     <Transition name="fade">
       <button
         v-if="!panelOpen"
+        type="button"
         class="fab"
         title="Open controls"
         @click="panelOpen = true"
@@ -361,27 +383,76 @@ const gradient = new ShaderGradient(container, gradientOptions)
           stroke-width="2"
           stroke-linecap="round"
         >
-          <line x1="4" y1="21" x2="4" y2="14" />
-          <line x1="4" y1="10" x2="4" y2="3" />
-          <line x1="12" y1="21" x2="12" y2="12" />
-          <line x1="12" y1="8" x2="12" y2="3" />
-          <line x1="20" y1="21" x2="20" y2="16" />
-          <line x1="20" y1="12" x2="20" y2="3" />
-          <line x1="1" y1="14" x2="7" y2="14" />
-          <line x1="9" y1="8" x2="15" y2="8" />
-          <line x1="17" y1="16" x2="23" y2="16" />
+          <line
+            x1="4"
+            y1="21"
+            x2="4"
+            y2="14"
+          />
+          <line
+            x1="4"
+            y1="10"
+            x2="4"
+            y2="3"
+          />
+          <line
+            x1="12"
+            y1="21"
+            x2="12"
+            y2="12"
+          />
+          <line
+            x1="12"
+            y1="8"
+            x2="12"
+            y2="3"
+          />
+          <line
+            x1="20"
+            y1="21"
+            x2="20"
+            y2="16"
+          />
+          <line
+            x1="20"
+            y1="12"
+            x2="20"
+            y2="3"
+          />
+          <line
+            x1="1"
+            y1="14"
+            x2="7"
+            y2="14"
+          />
+          <line
+            x1="9"
+            y1="8"
+            x2="15"
+            y2="8"
+          />
+          <line
+            x1="17"
+            y1="16"
+            x2="23"
+            y2="16"
+          />
         </svg>
       </button>
     </Transition>
 
     <Transition name="slide">
-      <aside v-if="panelOpen" class="panel">
+      <aside
+        v-if="panelOpen"
+        class="panel"
+      >
         <header class="panel-header">
           <div class="panel-title">
             <h1>Shader Gradient</h1>
             <span class="badge">Playground</span>
           </div>
           <button
+            type="button"
             class="icon-btn"
             title="Close panel"
             @click="panelOpen = false"
@@ -403,11 +474,14 @@ const gradient = new ShaderGradient(container, gradientOptions)
         <div class="panel-body">
           <!-- Presets -->
           <section class="section">
-            <h2 class="section-title">Presets</h2>
+            <h2 class="section-title">
+              Presets
+            </h2>
             <div class="chip-row">
               <button
                 v-for="[name, preset] in presetEntries"
                 :key="name"
+                type="button"
                 :class="{ active: state.preset === name }"
                 @click="selectPreset(name)"
               >
@@ -418,24 +492,42 @@ const gradient = new ShaderGradient(container, gradientOptions)
 
           <!-- Shape -->
           <section class="section">
-            <h2 class="section-title">Shape</h2>
+            <h2 class="section-title">
+              Shape
+            </h2>
             <div class="field-grid">
               <div class="field">
                 <label>Mesh Type</label>
                 <select v-model="state.type">
-                  <option value="plane">Plane</option>
-                  <option value="sphere">Sphere</option>
-                  <option value="waterPlane">Water Plane</option>
+                  <option value="plane">
+                    Plane
+                  </option>
+                  <option value="sphere">
+                    Sphere
+                  </option>
+                  <option value="waterPlane">
+                    Water Plane
+                  </option>
                 </select>
               </div>
               <div class="field">
                 <label>Shader</label>
                 <select v-model="state.shader">
-                  <option value="defaults">defaults</option>
-                  <option value="positionMix">positionMix</option>
-                  <option value="cosmic">cosmic</option>
-                  <option value="glass">glass</option>
-                  <option value="lava">lava</option>
+                  <option value="defaults">
+                    defaults
+                  </option>
+                  <option value="positionMix">
+                    positionMix
+                  </option>
+                  <option value="cosmic">
+                    cosmic
+                  </option>
+                  <option value="glass">
+                    glass
+                  </option>
+                  <option value="lava">
+                    lava
+                  </option>
                 </select>
               </div>
             </div>
@@ -443,18 +535,29 @@ const gradient = new ShaderGradient(container, gradientOptions)
 
           <!-- Colors -->
           <section class="section">
-            <h2 class="section-title">Colors</h2>
+            <h2 class="section-title">
+              Colors
+            </h2>
             <div class="color-row">
               <label class="color-field">
-                <input v-model="state.color1" type="color" />
+                <input
+                  v-model="state.color1"
+                  type="color"
+                >
                 <span>Color 1</span>
               </label>
               <label class="color-field">
-                <input v-model="state.color2" type="color" />
+                <input
+                  v-model="state.color2"
+                  type="color"
+                >
                 <span>Color 2</span>
               </label>
               <label class="color-field">
-                <input v-model="state.color3" type="color" />
+                <input
+                  v-model="state.color3"
+                  type="color"
+                >
                 <span>Color 3</span>
               </label>
             </div>
@@ -462,9 +565,15 @@ const gradient = new ShaderGradient(container, gradientOptions)
 
           <!-- Noise -->
           <section class="section">
-            <h2 class="section-title">Noise</h2>
+            <h2 class="section-title">
+              Noise
+            </h2>
             <div class="slider-group">
-              <div v-for="s in noiseSliders" :key="s.key" class="slider-field">
+              <div
+                v-for="s in noiseSliders"
+                :key="s.key"
+                class="slider-field"
+              >
                 <div class="slider-header">
                   <label>{{ s.label }}</label>
                   <span class="slider-val">{{ formatNum(s.key) }}</span>
@@ -477,28 +586,40 @@ const gradient = new ShaderGradient(container, gradientOptions)
                   :value="getNum(s.key)"
                   :style="{ '--fill': sliderFill(s.min, s.max, s.key) }"
                   @input="setNum(s.key, $event)"
-                />
+                >
               </div>
             </div>
           </section>
 
           <!-- Lighting -->
           <section class="section">
-            <h2 class="section-title">Lighting</h2>
+            <h2 class="section-title">
+              Lighting
+            </h2>
             <div class="field-grid">
               <div class="field">
                 <label>Type</label>
                 <select v-model="state.lightType">
-                  <option value="3d">3D</option>
-                  <option value="env">Environment</option>
+                  <option value="3d">
+                    3D
+                  </option>
+                  <option value="env">
+                    Environment
+                  </option>
                 </select>
               </div>
               <div class="field">
                 <label>Environment</label>
                 <select v-model="state.envPreset">
-                  <option value="city">City</option>
-                  <option value="dawn">Dawn</option>
-                  <option value="lobby">Lobby</option>
+                  <option value="city">
+                    City
+                  </option>
+                  <option value="dawn">
+                    Dawn
+                  </option>
+                  <option value="lobby">
+                    Lobby
+                  </option>
                 </select>
               </div>
             </div>
@@ -520,14 +641,16 @@ const gradient = new ShaderGradient(container, gradientOptions)
                   :value="getNum(s.key)"
                   :style="{ '--fill': sliderFill(s.min, s.max, s.key) }"
                   @input="setNum(s.key, $event)"
-                />
+                >
               </div>
             </div>
           </section>
 
           <!-- Camera -->
           <section class="section">
-            <h2 class="section-title">Camera</h2>
+            <h2 class="section-title">
+              Camera
+            </h2>
             <div class="slider-group">
               <div
                 v-for="s in cameraSliders"
@@ -546,14 +669,16 @@ const gradient = new ShaderGradient(container, gradientOptions)
                   :value="getNum(s.key)"
                   :style="{ '--fill': sliderFill(s.min, s.max, s.key) }"
                   @input="setNum(s.key, $event)"
-                />
+                >
               </div>
             </div>
           </section>
 
           <!-- Options -->
           <section class="section">
-            <h2 class="section-title">Options</h2>
+            <h2 class="section-title">
+              Options
+            </h2>
             <div class="toggle-grid">
               <label
                 v-for="t in toggles"
@@ -564,7 +689,7 @@ const gradient = new ShaderGradient(container, gradientOptions)
                   type="checkbox"
                   :checked="toBool((state as Record<string, unknown>)[t.key])"
                   @change="setCheck(t.key, $event)"
-                />
+                >
                 <span>{{ t.label }}</span>
               </label>
             </div>
@@ -572,7 +697,9 @@ const gradient = new ShaderGradient(container, gradientOptions)
 
           <!-- Export -->
           <section class="section">
-            <h2 class="section-title">Export</h2>
+            <h2 class="section-title">
+              Export
+            </h2>
             <div class="export-tabs">
               <button
                 v-for="mode in exportModes"
@@ -586,7 +713,11 @@ const gradient = new ShaderGradient(container, gradientOptions)
             </div>
             <div class="query-wrapper">
               <pre class="query-output">{{ exportContent }}</pre>
-              <button class="copy-btn" @click="copyQuery">
+              <button
+                type="button"
+                class="copy-btn"
+                @click="copyQuery"
+              >
                 {{ copied ? 'Copied!' : 'Copy' }}
               </button>
             </div>

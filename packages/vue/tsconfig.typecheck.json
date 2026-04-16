@@ -1,8 +1,8 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "rootDir": "..",
     "baseUrl": ".",
+    "rootDir": "..",
     "paths": {
       "@shader-gradient/core": ["../core/src/index.ts"]
     }

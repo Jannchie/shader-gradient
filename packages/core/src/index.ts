@@ -6,12 +6,12 @@ export type {
   EnvironmentPreset,
   LightType,
   MeshType,
-  ShaderName,
   ShaderControlMode,
   ShaderGradientCameraUpdate,
   ShaderGradientInput,
   ShaderGradientOptions,
   ShaderGradientPreset,
   ShaderGradientPresetName,
+  ShaderName,
   ToggleState,
 } from './types'

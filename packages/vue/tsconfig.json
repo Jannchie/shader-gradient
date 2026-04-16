@@ -1,9 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "jsx": "preserve",
     "rootDir": "src",
-    "outDir": "dist",
-    "jsx": "preserve"
+    "outDir": "dist"
   },
   "include": ["src"]
 }

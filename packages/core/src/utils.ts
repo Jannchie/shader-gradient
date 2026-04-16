@@ -14,70 +14,90 @@ export function radToDeg(rad: number): number {
 
 export function hexToRgb(hex: string): [number, number, number] {
   const normalized = hex.trim().replace('#', '')
-  const value =
-    normalized.length === 3
-      ? normalized
-          .split('')
-          .map((char) => char + char)
-          .join('')
+  const value
+    = normalized.length === 3
+      ? [...normalized].map(char => char + char).join('')
       : normalized
 
   return [
-    parseInt(value.slice(0, 2), 16) / 255,
-    parseInt(value.slice(2, 4), 16) / 255,
-    parseInt(value.slice(4, 6), 16) / 255,
+    Number.parseInt(value.slice(0, 2), 16) / 255,
+    Number.parseInt(value.slice(2, 4), 16) / 255,
+    Number.parseInt(value.slice(4, 6), 16) / 255,
   ]
 }
 
-export function hexToRgb255(hex: string): { r: number; g: number; b: number } {
+export function hexToRgb255(hex: string): { r: number, g: number, b: number } {
   const normalized = hex.trim().replace('#', '')
-  const value =
-    normalized.length === 3
-      ? normalized
-          .split('')
-          .map((char) => char + char)
-          .join('')
+  const value
+    = normalized.length === 3
+      ? [...normalized].map(char => char + char).join('')
       : normalized
 
   return {
-    r: parseInt(value.slice(0, 2), 16),
-    g: parseInt(value.slice(2, 4), 16),
-    b: parseInt(value.slice(4, 6), 16),
+    r: Number.parseInt(value.slice(0, 2), 16),
+    g: Number.parseInt(value.slice(2, 4), 16),
+    b: Number.parseInt(value.slice(4, 6), 16),
   }
 }
 
-export function rgbToHex([r, g, b]: [number, number, number]): string {
-  return `#${[r, g, b]
-    .map((value) => Math.round(clamp(value, 0, 1) * 255).toString(16).padStart(2, '0'))
+export function rgbToHex([
+  r,
+  g,
+  b,
+]: [number, number, number]): string {
+  return `#${[
+    r,
+    g,
+    b,
+  ]
+    .map(value => Math.round(clamp(value, 0, 1) * 255).toString(16).padStart(2, '0'))
     .join('')}`
 }
 
 export function parseToggle(value: boolean | ToggleState | undefined, fallback: boolean): boolean {
-  if (value === undefined) return fallback
-  if (typeof value === 'boolean') return value
+  if (value === undefined) {
+    return fallback
+  }
+  if (typeof value === 'boolean') {
+    return value
+  }
   return value === 'on'
 }
 
 export function parseRangeState(value: boolean | RangeState | undefined, fallback: boolean): boolean {
-  if (value === undefined) return fallback
-  if (typeof value === 'boolean') return value
+  if (value === undefined) {
+    return fallback
+  }
+  if (typeof value === 'boolean') {
+    return value
+  }
   return value === 'enabled'
 }
 
 export function parseNumber(value: unknown, fallback: number): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
   if (typeof value === 'string' && value.trim()) {
     const parsed = Number(value)
-    if (Number.isFinite(parsed)) return parsed
+    if (Number.isFinite(parsed)) {
+      return parsed
+    }
   }
   return fallback
 }
 
 export function parseBoolean(value: unknown, fallback: boolean): boolean {
-  if (typeof value === 'boolean') return value
+  if (typeof value === 'boolean') {
+    return value
+  }
   if (typeof value === 'string') {
-    if (value === 'true' || value === 'on' || value === 'enabled') return true
-    if (value === 'false' || value === 'off' || value === 'disabled') return false
+    if (value === 'true' || value === 'on' || value === 'enabled') {
+      return true
+    }
+    if (value === 'false' || value === 'off' || value === 'disabled') {
+      return false
+    }
   }
   return fallback
 }
@@ -121,11 +141,14 @@ export function cameraPositionFromSpherical(update: ShaderGradientCameraUpdate) 
 
 export function environmentTint(preset: EnvironmentPreset): [number, number, number] {
   switch (preset) {
-    case 'dawn':
-      return [1.0, 0.78, 0.6]
-    case 'lobby':
-      return [0.78, 0.84, 1.0]
-    default:
-      return [0.92, 0.95, 1.0]
+    case 'dawn': {
+      return [1, 0.78, 0.6]
+    }
+    case 'lobby': {
+      return [0.78, 0.84, 1]
+    }
+    default: {
+      return [0.92, 0.95, 1]
+    }
   }
 }

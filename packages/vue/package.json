@@ -1,12 +1,9 @@
 {
   "name": "@shader-gradient/vue",
-  "version": "0.1.0",
   "type": "module",
-  "license": "MIT",
+  "version": "0.1.0",
   "description": "Vue bindings for @shader-gradient/core",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "license": "MIT",
   "keywords": [
     "shader",
     "gradient",
@@ -24,9 +21,12 @@
       "require": "./dist/index.cjs"
     }
   },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "dist",
-    "README.md"
+    "README.md",
+    "dist"
   ],
   "publishConfig": {
     "access": "public"
@@ -35,11 +35,11 @@
     "build": "tsdown",
     "typecheck": "vue-tsc --noEmit -p tsconfig.typecheck.json"
   },
-  "dependencies": {
-    "@shader-gradient/core": "workspace:*"
-  },
   "peerDependencies": {
     "vue": "^3.4.0"
+  },
+  "dependencies": {
+    "@shader-gradient/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.6.3",

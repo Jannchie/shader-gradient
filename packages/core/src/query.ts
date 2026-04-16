@@ -1,6 +1,6 @@
+import type { ShaderGradientInput, ShaderGradientOptions, ShaderName } from './types'
 import { DEFAULT_OPTIONS } from './defaults'
 import { presets } from './presets'
-import type { ShaderGradientInput, ShaderGradientOptions, ShaderName } from './types'
 import { clamp, formatUrlString, parseBoolean, parseNumber, parseRangeState, parseToggle } from './utils'
 
 const KNOWN_PRESETS = new Set(Object.keys(presets))
@@ -29,7 +29,7 @@ function parseSearchParams(urlString: string): Record<string, QueryValue> {
 
 export function parseShaderGradientQuery(urlString: string): Partial<ShaderGradientInput> {
   const params = parseSearchParams(urlString)
-  const has = (key: string) => Object.prototype.hasOwnProperty.call(params, key)
+  const has = (key: string) => Object.hasOwn(params, key)
 
   return {
     preset:
@@ -96,10 +96,10 @@ export function parseShaderGradientQuery(urlString: string): Partial<ShaderGradi
 }
 
 export function resolveShaderGradientOptions(input: Partial<ShaderGradientInput> = {}): ShaderGradientOptions {
-  const queryInput =
-    input.control === 'query' && input.urlString ? parseShaderGradientQuery(input.urlString) : undefined
-  const presetInput =
-    (queryInput?.preset ?? input.preset) && presets[(queryInput?.preset ?? input.preset) as keyof typeof presets]
+  const queryInput
+    = input.control === 'query' && input.urlString ? parseShaderGradientQuery(input.urlString) : undefined
+  const presetInput
+    = (queryInput?.preset ?? input.preset) && presets[(queryInput?.preset ?? input.preset) as keyof typeof presets]
       ? presets[(queryInput?.preset ?? input.preset) as keyof typeof presets].props
       : undefined
 

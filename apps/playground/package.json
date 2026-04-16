@@ -1,17 +1,17 @@
 {
   "name": "@shader-gradient/playground",
-  "private": true,
   "type": "module",
+  "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
   },
   "dependencies": {
+    "@react-three/fiber": "^8.18.0",
     "@shader-gradient/core": "workspace:*",
     "@shader-gradient/react": "workspace:*",
     "@shader-gradient/vue": "workspace:*",
-    "@react-three/fiber": "^8.18.0",
     "@shadergradient/react": "^2.4.20",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

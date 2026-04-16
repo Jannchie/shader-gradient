@@ -1,10 +1,8 @@
-import { ShaderGradient as CoreShaderGradient } from '@shader-gradient/core'
 import type { ShaderGradientInput } from '@shader-gradient/core'
+import type { CSSProperties, ReactNode } from 'react'
+import { ShaderGradient as CoreShaderGradient } from '@shader-gradient/core'
 import {
   createContext,
-  type CSSProperties,
-  type MutableRefObject,
-  type ReactNode,
   useContext,
   useEffect,
   useMemo,
@@ -12,7 +10,7 @@ import {
   useState,
 } from 'react'
 
-type CanvasContextValue = {
+interface CanvasContextValue {
   container: HTMLDivElement | null
   defaults: Pick<
     ShaderGradientInput,
@@ -20,7 +18,7 @@ type CanvasContextValue = {
   >
 }
 
-type ShaderGradientCanvasProps = {
+interface ShaderGradientCanvasProps {
   children: ReactNode
   style?: CSSProperties
   className?: string
@@ -42,12 +40,14 @@ function useInView(
   enabled: boolean,
   threshold: number,
   rootMargin: string,
-): [MutableRefObject<HTMLDivElement | null>, boolean] {
-  const ref = useRef<HTMLDivElement | null>(null)
+): [(node: HTMLDivElement | null) => void, HTMLDivElement | null, boolean] {
+  const [container, setContainer] = useState<HTMLDivElement | null>(null)
   const [isInView, setIsInView] = useState(!enabled)
 
   useEffect(() => {
-    if (!enabled || !ref.current) return
+    if (!enabled || !container) {
+      return
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -59,11 +59,11 @@ function useInView(
       { threshold, rootMargin },
     )
 
-    observer.observe(ref.current)
+    observer.observe(container)
     return () => observer.disconnect()
-  }, [enabled, threshold, rootMargin])
+  }, [container, enabled, threshold, rootMargin])
 
-  return [ref, isInView]
+  return [setContainer, container, isInView]
 }
 
 export function ShaderGradientCanvas({
@@ -79,12 +79,11 @@ export function ShaderGradientCanvas({
   preserveDrawingBuffer,
   powerPreference,
 }: ShaderGradientCanvasProps) {
-  const [containerRef, isInView] = useInView(lazyLoad, threshold, rootMargin)
-  const [container, setContainer] = useState<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    setContainer(containerRef.current)
-  }, [containerRef, isInView])
+  const [
+    containerRef,
+    container,
+    isInView,
+  ] = useInView(lazyLoad, threshold, rootMargin)
 
   const contextValue = useMemo<CanvasContextValue>(
     () => ({
@@ -126,11 +125,15 @@ export function ShaderGradient(props: ShaderGradientProps) {
     ...context.defaults,
     ...props,
   }
+  const latestPropsRef = useRef(mergedProps)
+  latestPropsRef.current = mergedProps
 
   useEffect(() => {
-    if (!context.container) return
+    if (!context.container) {
+      return
+    }
 
-    const instance = new CoreShaderGradient(context.container, mergedProps)
+    const instance = new CoreShaderGradient(context.container, latestPropsRef.current)
     instanceRef.current = instance
 
     return () => {
@@ -140,29 +143,23 @@ export function ShaderGradient(props: ShaderGradientProps) {
   }, [context.container])
 
   useEffect(() => {
-    if (!instanceRef.current) return
+    if (!instanceRef.current) {
+      return
+    }
     instanceRef.current.update(mergedProps)
   })
 
   return null
 }
 
-export type { ShaderGradientInput, ShaderGradientProps, ShaderGradientCanvasProps }
+export type { ShaderGradientCanvasProps, ShaderGradientProps }
 
 export type {
   EnvironmentPreset,
   LightType,
   MeshType,
   ShaderGradientCameraUpdate,
+  ShaderGradientInput,
   ShaderGradientOptions,
   ShaderGradientPresetName,
-} from '@shader-gradient/core'
-
-export {
-  DEFAULT_OPTIONS,
-  parseShaderGradientQuery,
-  presetEntries,
-  presets,
-  resolveShaderGradientOptions,
-  serializeShaderGradientOptions,
 } from '@shader-gradient/core'

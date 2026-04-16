@@ -15,7 +15,7 @@ npm install @shader-gradient/core
 ```ts
 import { ShaderGradient } from '@shader-gradient/core'
 
-const container = document.getElementById('shader-gradient')
+const container = document.querySelector('#shader-gradient')
 
 if (!container) {
   throw new Error('Missing #shader-gradient container.')

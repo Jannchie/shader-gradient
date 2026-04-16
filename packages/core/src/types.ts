@@ -6,8 +6,8 @@ export type LightType = '3d' | 'env'
 export type EnvironmentPreset = 'city' | 'dawn' | 'lobby'
 export type ShaderName = 'defaults' | 'positionMix' | 'cosmic' | 'glass' | 'lava'
 
-export type ShaderGradientPresetName =
-  | 'halo'
+export type ShaderGradientPresetName
+  = | 'halo'
   | 'pensive'
   | 'neutronStar'
   | 'mint'

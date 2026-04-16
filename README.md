@@ -57,7 +57,7 @@ npm install @shader-gradient/vue vue
 ```ts
 import { ShaderGradient } from '@shader-gradient/core'
 
-const container = document.getElementById('shader-gradient')
+const container = document.querySelector('#shader-gradient')
 
 if (!container) {
   throw new Error('Missing #shader-gradient container.')
@@ -83,7 +83,7 @@ gradient.dispose()
 ## React Usage
 
 ```tsx
-import { ShaderGradientCanvas, ShaderGradient } from '@shader-gradient/react'
+import { ShaderGradient, ShaderGradientCanvas } from '@shader-gradient/react'
 
 export function HeroGradient() {
   return (
@@ -107,7 +107,7 @@ export function HeroGradient() {
 
 ```vue
 <script setup lang="ts">
-import { ShaderGradientCanvas, ShaderGradient } from '@shader-gradient/vue'
+import { ShaderGradient, ShaderGradientCanvas } from '@shader-gradient/vue'
 </script>
 
 <template>

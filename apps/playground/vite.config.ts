@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite'
+import { fileURLToPath, URL } from 'node:url'
 import react from '@vitejs/plugin-react'
 import vue from '@vitejs/plugin-vue'
-import { fileURLToPath, URL } from 'node:url'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
   base: './',
@@ -17,10 +17,10 @@ export default defineConfig({
       '@shader-gradient/vue': fileURLToPath(
         new URL('../../packages/vue/src/index.ts', import.meta.url),
       ),
-      react: fileURLToPath(new URL('./node_modules/react', import.meta.url)),
-      'react-dom': fileURLToPath(new URL('./node_modules/react-dom', import.meta.url)),
+      'react': fileURLToPath(new URL('node_modules/react', import.meta.url)),
+      'react-dom': fileURLToPath(new URL('node_modules/react-dom', import.meta.url)),
       '@react-three/fiber': fileURLToPath(
-        new URL('./node_modules/@react-three/fiber', import.meta.url),
+        new URL('node_modules/@react-three/fiber', import.meta.url),
       ),
     },
   },
