@@ -528,6 +528,15 @@ function copyQuery() {
                   <option value="lava">
                     lava
                   </option>
+                  <option value="aurora">
+                    aurora
+                  </option>
+                  <option value="marble">
+                    marble
+                  </option>
+                  <option value="pulse">
+                    pulse
+                  </option>
                 </select>
               </div>
             </div>

@@ -1,4 +1,7 @@
+export * as aurora from '../shaders/aurora'
 export * as lava from '../shaders/lava'
+export * as marble from '../shaders/marble'
+export * as pulse from '../shaders/pulse'
 export * as cosmic from './cosmic'
 export * as defaults from './defaults'
 export * as glass from './glass'

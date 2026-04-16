@@ -4,7 +4,7 @@ import { presets } from './presets'
 import { clamp, formatUrlString, parseBoolean, parseNumber, parseRangeState, parseToggle } from './utils'
 
 const KNOWN_PRESETS = new Set(Object.keys(presets))
-const KNOWN_SHADERS = new Set<ShaderName>(['defaults', 'positionMix', 'cosmic', 'glass', 'lava'])
+const KNOWN_SHADERS = new Set<ShaderName>(['defaults', 'positionMix', 'cosmic', 'glass', 'lava', 'aurora', 'marble', 'pulse'])
 
 type QueryValue = string | number | boolean
 

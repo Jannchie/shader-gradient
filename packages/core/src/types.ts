@@ -4,7 +4,7 @@ export type RangeState = 'enabled' | 'disabled'
 export type ShaderControlMode = 'props' | 'query'
 export type LightType = '3d' | 'env'
 export type EnvironmentPreset = 'city' | 'dawn' | 'lobby'
-export type ShaderName = 'defaults' | 'positionMix' | 'cosmic' | 'glass' | 'lava'
+export type ShaderName = 'defaults' | 'positionMix' | 'cosmic' | 'glass' | 'lava' | 'aurora' | 'marble' | 'pulse'
 
 export type ShaderGradientPresetName
   = | 'halo'
@@ -19,6 +19,12 @@ export type ShaderGradientPresetName
   | 'mandarin'
   | 'cottonCandy'
   | 'lavaFlow'
+  | 'borealis'
+  | 'deepOcean'
+  | 'silkRoad'
+  | 'jade'
+  | 'neonGrid'
+  | 'heartbeat'
 
 export interface ShaderGradientCameraUpdate {
   cAzimuthAngle: number

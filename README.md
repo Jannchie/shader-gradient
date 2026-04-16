@@ -127,8 +127,8 @@ import { ShaderGradient, ShaderGradientCanvas } from '@shader-gradient/vue'
 
 ## Features
 
-- Presets such as `halo`, `pensive`, `mint`, and `interstella`
-- Shader families: `defaults`, `positionMix`, `cosmic`, `glass`
+- Presets such as `halo`, `pensive`, `mint`, `interstella`, and more
+- Shader families: `defaults`, `positionMix`, `cosmic`, `glass`, `lava`, `aurora`, `marble`, `pulse`
 - Mesh types: `plane`, `sphere`, `waterPlane`
 - Query-string import/export
 - Camera controls and camera parameter serialization
@@ -154,6 +154,38 @@ const query = serializeShaderGradientOptions({
 
 const parsed = parseShaderGradientQuery(query)
 ```
+
+## Original Shaders & Presets
+
+In addition to the shaders ported from the upstream project, this repository includes several original shader families and presets:
+
+### Original Shaders
+
+| Shader | Description |
+|--------|-------------|
+| `lava` | Molten lava with domain-warped FBM flow, Voronoi crust cracks, and subsurface glow |
+| `aurora` | Northern-lights curtains built from layered FBM bands, vertical fade, and shimmer |
+| `marble` | Organic stone / fluid-art veining via double domain warping and polished surface sheen |
+| `pulse` | Cyberpunk energy rings with multi-center wave interference, scanlines, and beat pulses |
+
+#### Design Notes
+
+- **Aurora** draws on the natural shape of real aurora borealis — light curtains that hang vertically and ripple horizontally. Technically it stretches multi-layer FBM noise along the horizontal axis to form "curtains", applies a vertical gradient fade to simulate light draping down from the sky, and overlays a high-frequency noise layer for fine shimmer.
+- **Marble** leverages the well-known observation that double domain warping (warping already-warped coordinates) naturally produces organic, marble-like veining — a technique widely discussed in Inigo Quilez's articles on domain distortion. Sharp vein edges are carved out with `smoothstep`, and a subtle rim sheen mimics the look of polished stone.
+- **Pulse** starts from a simple physics idea: what if ripples on water were made of light? Multiple moving wave centers create an interference pattern; `smoothstep` sharpens the rings, and additive scanlines plus a `pow`-driven beat pulse push the result toward a cyberpunk aesthetic.
+- **Lava** combines domain-warped FBM for molten flow with Voronoi distance fields for cooling crust cracks. Hot magma glows through the cracks via an inverted Voronoi edge mask, and a pulsing heat term keeps the surface alive.
+
+### Original Presets
+
+| Preset | Shader | Mesh | Palette |
+|--------|--------|------|---------|
+| `lavaFlow` | lava | waterPlane | Deep purple / crimson |
+| `borealis` | aurora | waterPlane | Green / cyan / purple |
+| `deepOcean` | aurora | sphere | Navy / teal / seafoam |
+| `silkRoad` | marble | plane | Ivory / gold / dark walnut |
+| `jade` | marble | sphere | Emerald / mint / forest green |
+| `neonGrid` | pulse | waterPlane | Magenta / cyan / midnight blue |
+| `heartbeat` | pulse | sphere | Red / pink / dark crimson |
 
 ## Local Development
 
