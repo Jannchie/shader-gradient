@@ -1,6 +1,50 @@
-import type { ShaderGradientPreset, ShaderGradientPresetName } from './types'
+import type { ShaderGradientInput, ShaderGradientPreset, ShaderGradientPresetName } from './types'
 
-export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
+// Baseline for every preset. Anything a preset doesn't specify falls back to
+// these values instead of leaking in from the previously applied preset. This
+// keeps `preset` calls fully self-contained — picking a preset resets every
+// visual field to a known state.
+export const BASE_PRESET_PROPS: Partial<ShaderGradientInput> = {
+  type: 'plane',
+  shader: 'defaults',
+  animate: 'on',
+  uTime: 0,
+  uSpeed: 0.4,
+  uStrength: 4,
+  uDensity: 1.3,
+  uFrequency: 5.5,
+  uAmplitude: 1,
+  range: 'disabled',
+  rangeStart: 0,
+  rangeEnd: 40,
+  loop: 'off',
+  loopDuration: 8,
+  positionX: 0,
+  positionY: 0,
+  positionZ: 0,
+  rotationX: 0,
+  rotationY: 0,
+  rotationZ: 0,
+  color1: '#ff5005',
+  color2: '#dbba95',
+  color3: '#d0bce1',
+  reflection: 0.1,
+  wireframe: false,
+  cAzimuthAngle: 180,
+  cPolarAngle: 90,
+  cDistance: 3.6,
+  cameraZoom: 1,
+  fov: 45,
+  lightType: '3d',
+  brightness: 1.2,
+  envPreset: 'city',
+  grain: 'off',
+  grainBlending: 1,
+  toggleAxis: false,
+  zoomOut: false,
+}
+
+const rawPresets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
   halo: {
     title: 'Halo',
     color: 'white',
@@ -626,4 +670,13 @@ export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = {
   },
 }
 
-export const presetEntries = Object.entries(presets)
+export const presets: Record<ShaderGradientPresetName, ShaderGradientPreset> = Object.fromEntries(
+  (Object.entries(rawPresets) as [ShaderGradientPresetName, ShaderGradientPreset][]).map(
+    ([name, preset]) => [
+      name,
+      { ...preset, props: { ...BASE_PRESET_PROPS, ...preset.props } },
+    ],
+  ),
+) as Record<ShaderGradientPresetName, ShaderGradientPreset>
+
+export const presetEntries = Object.entries(presets) as [ShaderGradientPresetName, ShaderGradientPreset][]

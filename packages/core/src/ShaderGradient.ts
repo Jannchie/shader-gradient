@@ -27,8 +27,24 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import * as officialShaders from './official-shaders'
 import { HALFTONE_SHADER } from './postprocessing/halftoneShader'
+import { BASE_PRESET_PROPS } from './presets'
 import { resolveShaderGradientOptions } from './query'
 import { damp, dampColor, degToRad, hexToRgb, radToDeg, rgbToHex } from './utils'
+
+const PRESET_FIELD_KEYS = new Set<keyof ShaderGradientInput>(
+  Object.keys(BASE_PRESET_PROPS) as (keyof ShaderGradientInput)[],
+)
+
+function stripPresetFields(options: ShaderGradientOptions): Partial<ShaderGradientInput> {
+  const result: Partial<ShaderGradientInput> = {}
+  for (const key of Object.keys(options) as (keyof ShaderGradientOptions)[]) {
+    if (PRESET_FIELD_KEYS.has(key as keyof ShaderGradientInput)) {
+      continue
+    }
+    ;(result as Record<string, unknown>)[key] = options[key]
+  }
+  return result
+}
 
 type ShaderUniforms = Record<string, { value: unknown }>
 
@@ -196,8 +212,11 @@ export class ShaderGradient {
   }
 
   update(options: Partial<ShaderGradientInput>): void {
+    const isPresetSwitch
+      = options.preset !== undefined && options.preset !== this.options.preset
+    const carryOver = isPresetSwitch ? stripPresetFields(this.options) : { ...this.options }
     const next = resolveShaderGradientOptions({
-      ...this.options,
+      ...carryOver,
       ...options,
       onCameraUpdate: options.onCameraUpdate ?? this.options.onCameraUpdate,
     })

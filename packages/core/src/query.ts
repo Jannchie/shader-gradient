@@ -29,70 +29,134 @@ function parseSearchParams(urlString: string): Record<string, QueryValue> {
 
 export function parseShaderGradientQuery(urlString: string): Partial<ShaderGradientInput> {
   const params = parseSearchParams(urlString)
-  const has = (key: string) => Object.hasOwn(params, key)
+  const has = (key: string) => Object.prototype.hasOwnProperty.call(params, key)
+  const result: Partial<ShaderGradientInput> = {}
 
-  return {
-    preset:
-      has('preset') && typeof params.preset === 'string' && KNOWN_PRESETS.has(params.preset)
-        ? (params.preset as keyof typeof presets)
-        : undefined,
-    type:
-      has('type') && typeof params.type === 'string'
-        ? (params.type as ShaderGradientInput['type'])
-        : undefined,
-    animate: has('animate') ? parseBoolean(params.animate, DEFAULT_OPTIONS.animate) : undefined,
-    uTime: has('uTime') ? parseNumber(params.uTime, DEFAULT_OPTIONS.uTime) : undefined,
-    uSpeed: has('uSpeed') ? parseNumber(params.uSpeed, DEFAULT_OPTIONS.uSpeed) : undefined,
-    uStrength: has('uStrength') ? parseNumber(params.uStrength, DEFAULT_OPTIONS.uStrength) : undefined,
-    uDensity: has('uDensity') ? parseNumber(params.uDensity, DEFAULT_OPTIONS.uDensity) : undefined,
-    uFrequency: has('uFrequency') ? parseNumber(params.uFrequency, DEFAULT_OPTIONS.uFrequency) : undefined,
-    uAmplitude: has('uAmplitude') ? parseNumber(params.uAmplitude, DEFAULT_OPTIONS.uAmplitude) : undefined,
-    range: has('range') ? parseBoolean(params.range, DEFAULT_OPTIONS.range) : undefined,
-    rangeStart: has('rangeStart') ? parseNumber(params.rangeStart, DEFAULT_OPTIONS.rangeStart) : undefined,
-    rangeEnd: has('rangeEnd') ? parseNumber(params.rangeEnd, DEFAULT_OPTIONS.rangeEnd) : undefined,
-    loop: has('loop') ? parseBoolean(params.loop, DEFAULT_OPTIONS.loop) : undefined,
-    loopDuration: has('loopDuration') ? parseNumber(params.loopDuration, DEFAULT_OPTIONS.loopDuration) : undefined,
-    positionX: has('positionX') ? parseNumber(params.positionX, DEFAULT_OPTIONS.positionX) : undefined,
-    positionY: has('positionY') ? parseNumber(params.positionY, DEFAULT_OPTIONS.positionY) : undefined,
-    positionZ: has('positionZ') ? parseNumber(params.positionZ, DEFAULT_OPTIONS.positionZ) : undefined,
-    rotationX: has('rotationX') ? parseNumber(params.rotationX, DEFAULT_OPTIONS.rotationX) : undefined,
-    rotationY: has('rotationY') ? parseNumber(params.rotationY, DEFAULT_OPTIONS.rotationY) : undefined,
-    rotationZ: has('rotationZ') ? parseNumber(params.rotationZ, DEFAULT_OPTIONS.rotationZ) : undefined,
-    color1: has('color1') && typeof params.color1 === 'string' ? params.color1 : undefined,
-    color2: has('color2') && typeof params.color2 === 'string' ? params.color2 : undefined,
-    color3: has('color3') && typeof params.color3 === 'string' ? params.color3 : undefined,
-    reflection: has('reflection') ? parseNumber(params.reflection, DEFAULT_OPTIONS.reflection) : undefined,
-    wireframe: has('wireframe') ? parseBoolean(params.wireframe, DEFAULT_OPTIONS.wireframe) : undefined,
-    shader:
-      has('shader') && typeof params.shader === 'string' && KNOWN_SHADERS.has(params.shader as ShaderName)
-        ? (params.shader as ShaderName)
-        : undefined,
-    cAzimuthAngle: has('cAzimuthAngle') ? parseNumber(params.cAzimuthAngle, DEFAULT_OPTIONS.cAzimuthAngle) : undefined,
-    cPolarAngle: has('cPolarAngle') ? parseNumber(params.cPolarAngle, DEFAULT_OPTIONS.cPolarAngle) : undefined,
-    cDistance: has('cDistance') ? parseNumber(params.cDistance, DEFAULT_OPTIONS.cDistance) : undefined,
-    cameraZoom: has('cameraZoom') ? parseNumber(params.cameraZoom, DEFAULT_OPTIONS.cameraZoom) : undefined,
-    lightType:
-      has('lightType') && typeof params.lightType === 'string'
-        ? (params.lightType as ShaderGradientInput['lightType'])
-        : undefined,
-    brightness: has('brightness') ? parseNumber(params.brightness, DEFAULT_OPTIONS.brightness) : undefined,
-    envPreset:
-      has('envPreset') && typeof params.envPreset === 'string'
-        ? (params.envPreset as ShaderGradientInput['envPreset'])
-        : undefined,
-    grain: has('grain') ? parseBoolean(params.grain, DEFAULT_OPTIONS.grain) : undefined,
-    grainBlending: has('grainBlending') ? parseNumber(params.grainBlending, DEFAULT_OPTIONS.grainBlending) : undefined,
-    toggleAxis: has('toggleAxis') ? parseBoolean(params.toggleAxis, DEFAULT_OPTIONS.toggleAxis) : undefined,
-    pixelDensity: has('pixelDensity') ? parseNumber(params.pixelDensity, DEFAULT_OPTIONS.pixelDensity) : undefined,
-    fov: has('fov') ? parseNumber(params.fov, DEFAULT_OPTIONS.fov) : undefined,
-    preserveDrawingBuffer: has('preserveDrawingBuffer')
-      ? parseBoolean(params.preserveDrawingBuffer, DEFAULT_OPTIONS.preserveDrawingBuffer)
-      : undefined,
-    powerPreference:
-      has('powerPreference') && typeof params.powerPreference === 'string'
-        ? (params.powerPreference as WebGLPowerPreference)
-        : undefined,
+  if (has('preset') && typeof params.preset === 'string' && KNOWN_PRESETS.has(params.preset)) {
+    result.preset = params.preset as keyof typeof presets
   }
+  if (has('type') && typeof params.type === 'string') {
+    result.type = params.type as ShaderGradientInput['type']
+  }
+  if (has('animate')) {
+    result.animate = parseBoolean(params.animate, DEFAULT_OPTIONS.animate)
+  }
+  if (has('uTime')) {
+    result.uTime = parseNumber(params.uTime, DEFAULT_OPTIONS.uTime)
+  }
+  if (has('uSpeed')) {
+    result.uSpeed = parseNumber(params.uSpeed, DEFAULT_OPTIONS.uSpeed)
+  }
+  if (has('uStrength')) {
+    result.uStrength = parseNumber(params.uStrength, DEFAULT_OPTIONS.uStrength)
+  }
+  if (has('uDensity')) {
+    result.uDensity = parseNumber(params.uDensity, DEFAULT_OPTIONS.uDensity)
+  }
+  if (has('uFrequency')) {
+    result.uFrequency = parseNumber(params.uFrequency, DEFAULT_OPTIONS.uFrequency)
+  }
+  if (has('uAmplitude')) {
+    result.uAmplitude = parseNumber(params.uAmplitude, DEFAULT_OPTIONS.uAmplitude)
+  }
+  if (has('range')) {
+    result.range = parseBoolean(params.range, DEFAULT_OPTIONS.range)
+  }
+  if (has('rangeStart')) {
+    result.rangeStart = parseNumber(params.rangeStart, DEFAULT_OPTIONS.rangeStart)
+  }
+  if (has('rangeEnd')) {
+    result.rangeEnd = parseNumber(params.rangeEnd, DEFAULT_OPTIONS.rangeEnd)
+  }
+  if (has('loop')) {
+    result.loop = parseBoolean(params.loop, DEFAULT_OPTIONS.loop)
+  }
+  if (has('loopDuration')) {
+    result.loopDuration = parseNumber(params.loopDuration, DEFAULT_OPTIONS.loopDuration)
+  }
+  if (has('positionX')) {
+    result.positionX = parseNumber(params.positionX, DEFAULT_OPTIONS.positionX)
+  }
+  if (has('positionY')) {
+    result.positionY = parseNumber(params.positionY, DEFAULT_OPTIONS.positionY)
+  }
+  if (has('positionZ')) {
+    result.positionZ = parseNumber(params.positionZ, DEFAULT_OPTIONS.positionZ)
+  }
+  if (has('rotationX')) {
+    result.rotationX = parseNumber(params.rotationX, DEFAULT_OPTIONS.rotationX)
+  }
+  if (has('rotationY')) {
+    result.rotationY = parseNumber(params.rotationY, DEFAULT_OPTIONS.rotationY)
+  }
+  if (has('rotationZ')) {
+    result.rotationZ = parseNumber(params.rotationZ, DEFAULT_OPTIONS.rotationZ)
+  }
+  if (has('color1') && typeof params.color1 === 'string') {
+    result.color1 = params.color1
+  }
+  if (has('color2') && typeof params.color2 === 'string') {
+    result.color2 = params.color2
+  }
+  if (has('color3') && typeof params.color3 === 'string') {
+    result.color3 = params.color3
+  }
+  if (has('reflection')) {
+    result.reflection = parseNumber(params.reflection, DEFAULT_OPTIONS.reflection)
+  }
+  if (has('wireframe')) {
+    result.wireframe = parseBoolean(params.wireframe, DEFAULT_OPTIONS.wireframe)
+  }
+  if (has('shader') && typeof params.shader === 'string' && KNOWN_SHADERS.has(params.shader as ShaderName)) {
+    result.shader = params.shader as ShaderName
+  }
+  if (has('cAzimuthAngle')) {
+    result.cAzimuthAngle = parseNumber(params.cAzimuthAngle, DEFAULT_OPTIONS.cAzimuthAngle)
+  }
+  if (has('cPolarAngle')) {
+    result.cPolarAngle = parseNumber(params.cPolarAngle, DEFAULT_OPTIONS.cPolarAngle)
+  }
+  if (has('cDistance')) {
+    result.cDistance = parseNumber(params.cDistance, DEFAULT_OPTIONS.cDistance)
+  }
+  if (has('cameraZoom')) {
+    result.cameraZoom = parseNumber(params.cameraZoom, DEFAULT_OPTIONS.cameraZoom)
+  }
+  if (has('lightType') && typeof params.lightType === 'string') {
+    result.lightType = params.lightType as ShaderGradientInput['lightType']
+  }
+  if (has('brightness')) {
+    result.brightness = parseNumber(params.brightness, DEFAULT_OPTIONS.brightness)
+  }
+  if (has('envPreset') && typeof params.envPreset === 'string') {
+    result.envPreset = params.envPreset as ShaderGradientInput['envPreset']
+  }
+  if (has('grain')) {
+    result.grain = parseBoolean(params.grain, DEFAULT_OPTIONS.grain)
+  }
+  if (has('grainBlending')) {
+    result.grainBlending = parseNumber(params.grainBlending, DEFAULT_OPTIONS.grainBlending)
+  }
+  if (has('toggleAxis')) {
+    result.toggleAxis = parseBoolean(params.toggleAxis, DEFAULT_OPTIONS.toggleAxis)
+  }
+  if (has('zoomOut')) {
+    result.zoomOut = parseBoolean(params.zoomOut, DEFAULT_OPTIONS.zoomOut)
+  }
+  if (has('pixelDensity')) {
+    result.pixelDensity = parseNumber(params.pixelDensity, DEFAULT_OPTIONS.pixelDensity)
+  }
+  if (has('fov')) {
+    result.fov = parseNumber(params.fov, DEFAULT_OPTIONS.fov)
+  }
+  if (has('preserveDrawingBuffer')) {
+    result.preserveDrawingBuffer = parseBoolean(params.preserveDrawingBuffer, DEFAULT_OPTIONS.preserveDrawingBuffer)
+  }
+  if (has('powerPreference') && typeof params.powerPreference === 'string') {
+    result.powerPreference = params.powerPreference as WebGLPowerPreference
+  }
+
+  return result
 }
 
 export function resolveShaderGradientOptions(input: Partial<ShaderGradientInput> = {}): ShaderGradientOptions {

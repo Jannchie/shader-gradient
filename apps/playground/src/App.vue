@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import type { ShaderGradientPresetName } from '@shader-gradient/core'
 import type { Root } from 'react-dom/client'
 import {
   parseShaderGradientQuery,
   presetEntries,
   presets,
-  serializeShaderGradientOptions,
+  resolveShaderGradientOptions,
   ShaderGradient,
 } from '@shader-gradient/core'
 import React from 'react'
@@ -17,48 +18,58 @@ const officialCompareRef = ref<HTMLElement>()
 let gradient: ShaderGradient | null = null
 let officialRoot: Root | null = null
 const transitionReady = ref(false)
-const hasInitialQuery
-  = globalThis.window !== undefined
-  && globalThis.location.search.trim() !== ''
-  && globalThis.location.search.trim() !== '?'
-
-const queryInput
-  = hasInitialQuery
-    ? parseShaderGradientQuery(globalThis.location.search)
-    : {}
-
-const initialPreset
-  = queryInput.preset && presets[queryInput.preset as keyof typeof presets]
-    ? (queryInput.preset as keyof typeof presets)
-    : 'halo'
-
-const queryPreset
-  = queryInput.preset && presets[queryInput.preset as keyof typeof presets]
-    ? presets[queryInput.preset as keyof typeof presets].props
-    : {}
-
-const state = reactive({
-  preset: initialPreset as string,
+const PLAYGROUND_DEFAULTS = {
   pixelDensity: 1.5,
   enableTransition: true,
   smoothTime: 0.18,
   enableCameraControls: true,
   enableCameraUpdate: true,
+}
+
+const queryInput
+  = globalThis.window !== undefined
+    ? parseShaderGradientQuery(globalThis.location.search)
+    : {}
+
+const initialPreset: ShaderGradientPresetName
+  = queryInput.preset && presets[queryInput.preset as ShaderGradientPresetName]
+    ? (queryInput.preset as ShaderGradientPresetName)
+    : 'halo'
+
+const state = reactive({
+  ...PLAYGROUND_DEFAULTS,
+  preset: initialPreset as string,
   ...presets[initialPreset].props,
-  ...queryPreset,
   ...queryInput,
 })
 
 const panelOpen = ref(true)
 const copied = ref(false)
 const exportMode = ref<'url' | 'react' | 'vue' | 'core'>('url')
-const queryString = computed(() => serializeShaderGradientOptions(state))
-const shareUrl = computed(() => {
-  if (globalThis.window === undefined) {
-    return queryString.value
+
+const presetBaseline = computed(() =>
+  state.preset && presets[state.preset as ShaderGradientPresetName]
+    ? resolveShaderGradientOptions({ preset: state.preset as ShaderGradientPresetName })
+    : resolveShaderGradientOptions({}),
+)
+const resolvedState = computed(() => resolveShaderGradientOptions(state))
+
+function diffAgainstPreset(keys: readonly string[]): Record<string, unknown> {
+  const baseline = presetBaseline.value as Record<string, unknown>
+  const current = resolvedState.value as Record<string, unknown>
+  const result: Record<string, unknown> = {}
+  for (const key of keys) {
+    const cur = current[key]
+    if (cur === undefined) {
+      continue
+    }
+    if (cur !== baseline[key]) {
+      result[key] = cur
+    }
   }
-  return `${globalThis.location.origin}${globalThis.location.pathname}${queryString.value}`
-})
+  return result
+}
+
 const runtimeState = computed(() => ({
   ...state,
   enableTransition: transitionReady.value ? state.enableTransition : false,
@@ -175,14 +186,6 @@ function formatObjectLiteral(input: Record<string, unknown>, indent = 2): string
     .join('\n')}\n}`
 }
 
-function pickState(keys: readonly string[]): Record<string, unknown> {
-  return Object.fromEntries(
-    keys
-      .map(key => [key, (state as Record<string, unknown>)[key]])
-      .filter(([, value]) => value !== undefined),
-  )
-}
-
 const noiseSliders = [
   { key: 'uSpeed', label: 'Speed', min: 0, max: 1.2, step: 0.01 },
   { key: 'uDensity', label: 'Density', min: 0.2, max: 3, step: 0.1 },
@@ -219,7 +222,6 @@ const canvasExportKeys = [
 ] as const
 
 const gradientExportKeys = [
-  'preset',
   'type',
   'animate',
   'uTime',
@@ -256,15 +258,32 @@ const gradientExportKeys = [
   'grainBlending',
   'toggleAxis',
   'zoomOut',
-  'hoverState',
-  'smoothTime',
-  'enableTransition',
-  'enableCameraControls',
-  'enableCameraUpdate',
 ] as const
 
-const canvasExportProps = computed(() => pickState(canvasExportKeys))
-const gradientExportProps = computed(() => pickState(gradientExportKeys))
+const canvasExportProps = computed(() => diffAgainstPreset(canvasExportKeys))
+const gradientExportProps = computed(() => {
+  const diff = diffAgainstPreset(gradientExportKeys)
+  return state.preset ? { preset: state.preset, ...diff } : diff
+})
+
+const queryString = computed(() => {
+  const combined = { ...gradientExportProps.value, ...canvasExportProps.value }
+  const params = new URLSearchParams()
+  for (const [k, v] of Object.entries(combined)) {
+    if (v === undefined) {
+      continue
+    }
+    params.set(k, String(v))
+  }
+  const str = params.toString()
+  return str ? `?${str}` : ''
+})
+const shareUrl = computed(() => {
+  if (globalThis.window === undefined) {
+    return queryString.value
+  }
+  return `${globalThis.location.origin}${globalThis.location.pathname}${queryString.value}`
+})
 
 const exportContent = computed(() => {
   if (exportMode.value === 'url') {

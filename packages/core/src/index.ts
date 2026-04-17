@@ -1,5 +1,5 @@
 export { DEFAULT_OPTIONS } from './defaults'
-export { presetEntries, presets } from './presets'
+export { BASE_PRESET_PROPS, presetEntries, presets } from './presets'
 export { parseShaderGradientQuery, resolveShaderGradientOptions, serializeShaderGradientOptions } from './query'
 export { ShaderGradient, ShaderGradientRenderer } from './ShaderGradient'
 export type {
