@@ -24,6 +24,7 @@ function toEnabledDisabled(value: unknown): 'enabled' | 'disabled' {
 }
 
 function toOfficialProps(state: Record<string, unknown>) {
+  const colors = Array.isArray(state.colors) ? (state.colors as string[]) : []
   const props = {
     type: state.type,
     animate: toOnOff(state.animate),
@@ -44,9 +45,9 @@ function toOfficialProps(state: Record<string, unknown>) {
     rotationX: state.rotationX,
     rotationY: state.rotationY,
     rotationZ: state.rotationZ,
-    color1: state.color1,
-    color2: state.color2,
-    color3: state.color3,
+    color1: colors[0] ?? state.color1,
+    color2: colors[1] ?? state.color2,
+    color3: colors[2] ?? state.color3,
     reflection: state.reflection,
     wireframe: state.wireframe,
     shader: state.shader,

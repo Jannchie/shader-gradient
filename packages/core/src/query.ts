@@ -1,10 +1,26 @@
 import type { ShaderGradientInput, ShaderGradientOptions, ShaderName } from './types'
 import { DEFAULT_OPTIONS } from './defaults'
 import { presets } from './presets'
+import { MAX_COLOR_STOPS } from './types'
 import { clamp, formatUrlString, parseBoolean, parseNumber, parseRangeState, parseToggle } from './utils'
 
+function mergeColorStops(input: Partial<ShaderGradientInput>): string[] {
+  if (Array.isArray(input.colors) && input.colors.length > 0) {
+    return input.colors.slice(0, MAX_COLOR_STOPS)
+  }
+  const legacy: string[] = []
+  for (let i = 1; i <= 7; i++) {
+    const key = `color${i}` as keyof ShaderGradientInput
+    const value = input[key]
+    if (typeof value === 'string') {
+      legacy.push(value)
+    }
+  }
+  return legacy.length > 0 ? legacy : DEFAULT_OPTIONS.colors.slice()
+}
+
 const KNOWN_PRESETS = new Set(Object.keys(presets))
-const KNOWN_SHADERS = new Set<ShaderName>(['defaults', 'positionMix', 'cosmic', 'glass', 'lava', 'aurora', 'marble', 'pulse'])
+const KNOWN_SHADERS = new Set<ShaderName>(['defaults', 'positionMix', 'cosmic', 'glass', 'lava', 'aurora', 'marble', 'pulse', 'spectrum', 'halo'])
 
 type QueryValue = string | number | boolean
 
@@ -92,14 +108,17 @@ export function parseShaderGradientQuery(urlString: string): Partial<ShaderGradi
   if (has('rotationZ')) {
     result.rotationZ = parseNumber(params.rotationZ, DEFAULT_OPTIONS.rotationZ)
   }
-  if (has('color1') && typeof params.color1 === 'string') {
-    result.color1 = params.color1
+  if (has('colors') && typeof params.colors === 'string') {
+    const parts = params.colors.split(',').map(s => s.trim()).filter(s => s.length > 0)
+    if (parts.length > 0) {
+      result.colors = parts.slice(0, MAX_COLOR_STOPS)
+    }
   }
-  if (has('color2') && typeof params.color2 === 'string') {
-    result.color2 = params.color2
-  }
-  if (has('color3') && typeof params.color3 === 'string') {
-    result.color3 = params.color3
+  for (let i = 1; i <= 7; i++) {
+    const key = `color${i}`
+    if (has(key) && typeof params[key] === 'string') {
+      ;(result as Record<string, string>)[key] = params[key] as string
+    }
   }
   if (has('reflection')) {
     result.reflection = parseNumber(params.reflection, DEFAULT_OPTIONS.reflection)
@@ -136,6 +155,33 @@ export function parseShaderGradientQuery(urlString: string): Partial<ShaderGradi
   }
   if (has('grainBlending')) {
     result.grainBlending = parseNumber(params.grainBlending, DEFAULT_OPTIONS.grainBlending)
+  }
+  if (has('bloom')) {
+    result.bloom = parseBoolean(params.bloom, DEFAULT_OPTIONS.bloom)
+  }
+  if (has('bloomStrength')) {
+    result.bloomStrength = parseNumber(params.bloomStrength, DEFAULT_OPTIONS.bloomStrength)
+  }
+  if (has('bloomRadius')) {
+    result.bloomRadius = parseNumber(params.bloomRadius, DEFAULT_OPTIONS.bloomRadius)
+  }
+  if (has('bloomThreshold')) {
+    result.bloomThreshold = parseNumber(params.bloomThreshold, DEFAULT_OPTIONS.bloomThreshold)
+  }
+  if (has('vignette')) {
+    result.vignette = parseBoolean(params.vignette, DEFAULT_OPTIONS.vignette)
+  }
+  if (has('vignetteStrength')) {
+    result.vignetteStrength = parseNumber(params.vignetteStrength, DEFAULT_OPTIONS.vignetteStrength)
+  }
+  if (has('vignetteSoftness')) {
+    result.vignetteSoftness = parseNumber(params.vignetteSoftness, DEFAULT_OPTIONS.vignetteSoftness)
+  }
+  if (has('chromaticAberration')) {
+    result.chromaticAberration = parseBoolean(params.chromaticAberration, DEFAULT_OPTIONS.chromaticAberration)
+  }
+  if (has('chromaticAberrationStrength')) {
+    result.chromaticAberrationStrength = parseNumber(params.chromaticAberrationStrength, DEFAULT_OPTIONS.chromaticAberrationStrength)
   }
   if (has('toggleAxis')) {
     result.toggleAxis = parseBoolean(params.toggleAxis, DEFAULT_OPTIONS.toggleAxis)
@@ -200,9 +246,7 @@ export function resolveShaderGradientOptions(input: Partial<ShaderGradientInput>
     rotationY: parseNumber(merged.rotationY, DEFAULT_OPTIONS.rotationY),
     rotationZ: parseNumber(merged.rotationZ, DEFAULT_OPTIONS.rotationZ),
 
-    color1: merged.color1 ?? DEFAULT_OPTIONS.color1,
-    color2: merged.color2 ?? DEFAULT_OPTIONS.color2,
-    color3: merged.color3 ?? DEFAULT_OPTIONS.color3,
+    colors: mergeColorStops(merged),
 
     reflection: clamp(parseNumber(merged.reflection, DEFAULT_OPTIONS.reflection), 0, 1),
     wireframe: parseBoolean(merged.wireframe, DEFAULT_OPTIONS.wireframe),
@@ -222,6 +266,18 @@ export function resolveShaderGradientOptions(input: Partial<ShaderGradientInput>
     envPreset: merged.envPreset ?? DEFAULT_OPTIONS.envPreset,
     grain: parseToggle(merged.grain, DEFAULT_OPTIONS.grain),
     grainBlending: clamp(parseNumber(merged.grainBlending, DEFAULT_OPTIONS.grainBlending), 0, 1),
+
+    bloom: parseToggle(merged.bloom, DEFAULT_OPTIONS.bloom),
+    bloomStrength: Math.max(0, parseNumber(merged.bloomStrength, DEFAULT_OPTIONS.bloomStrength)),
+    bloomRadius: clamp(parseNumber(merged.bloomRadius, DEFAULT_OPTIONS.bloomRadius), 0, 1),
+    bloomThreshold: clamp(parseNumber(merged.bloomThreshold, DEFAULT_OPTIONS.bloomThreshold), 0, 1),
+
+    vignette: parseToggle(merged.vignette, DEFAULT_OPTIONS.vignette),
+    vignetteStrength: clamp(parseNumber(merged.vignetteStrength, DEFAULT_OPTIONS.vignetteStrength), 0, 2),
+    vignetteSoftness: clamp(parseNumber(merged.vignetteSoftness, DEFAULT_OPTIONS.vignetteSoftness), 0, 1),
+
+    chromaticAberration: parseToggle(merged.chromaticAberration, DEFAULT_OPTIONS.chromaticAberration),
+    chromaticAberrationStrength: clamp(parseNumber(merged.chromaticAberrationStrength, DEFAULT_OPTIONS.chromaticAberrationStrength), 0, 0.05),
 
     toggleAxis: parseBoolean(merged.toggleAxis ?? merged.axesHelper, DEFAULT_OPTIONS.toggleAxis),
     zoomOut: parseBoolean(merged.zoomOut, DEFAULT_OPTIONS.zoomOut),
@@ -268,9 +324,7 @@ export function serializeShaderGradientOptions(input: Partial<ShaderGradientInpu
     ['rotationX', String(options.rotationX)],
     ['rotationY', String(options.rotationY)],
     ['rotationZ', String(options.rotationZ)],
-    ['color1', options.color1],
-    ['color2', options.color2],
-    ['color3', options.color3],
+    ['colors', options.colors.join(',')],
     ['reflection', String(options.reflection)],
     ['wireframe', String(options.wireframe)],
     ['shader', options.shader],
@@ -283,6 +337,15 @@ export function serializeShaderGradientOptions(input: Partial<ShaderGradientInpu
     ['envPreset', options.envPreset],
     ['grain', options.grain ? 'on' : 'off'],
     ['grainBlending', String(options.grainBlending)],
+    ['bloom', options.bloom ? 'on' : 'off'],
+    ['bloomStrength', String(options.bloomStrength)],
+    ['bloomRadius', String(options.bloomRadius)],
+    ['bloomThreshold', String(options.bloomThreshold)],
+    ['vignette', options.vignette ? 'on' : 'off'],
+    ['vignetteStrength', String(options.vignetteStrength)],
+    ['vignetteSoftness', String(options.vignetteSoftness)],
+    ['chromaticAberration', options.chromaticAberration ? 'on' : 'off'],
+    ['chromaticAberrationStrength', String(options.chromaticAberrationStrength)],
     ['toggleAxis', String(options.toggleAxis)],
     ['pixelDensity', String(options.pixelDensity)],
     ['fov', String(options.fov)],

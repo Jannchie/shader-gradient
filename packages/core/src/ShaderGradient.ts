@@ -18,15 +18,20 @@ import {
   Scene,
   ShaderChunk,
   Vector2,
+  Vector3,
   WebGLRenderer,
 } from 'three'
+import { MAX_COLOR_STOPS } from './types'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
 import * as officialShaders from './official-shaders'
+import { CHROMATIC_ABERRATION_SHADER } from './postprocessing/chromaticAberrationShader'
 import { HALFTONE_SHADER } from './postprocessing/halftoneShader'
+import { VIGNETTE_SHADER } from './postprocessing/vignetteShader'
 import { BASE_PRESET_PROPS } from './presets'
 import { resolveShaderGradientOptions } from './query'
 import { damp, dampColor, degToRad, hexToRgb, radToDeg, rgbToHex } from './utils'
@@ -44,6 +49,19 @@ function stripPresetFields(options: ShaderGradientOptions): Partial<ShaderGradie
     ;(result as Record<string, unknown>)[key] = options[key]
   }
   return result
+}
+
+type RGB = [number, number, number]
+
+function buildColorStops(options: ShaderGradientOptions): RGB[] {
+  return options.colors.map(hex => hexToRgb(hex))
+}
+
+function colorAt(stops: RGB[], index: number): RGB {
+  if (stops.length === 0) {
+    return [0, 0, 0]
+  }
+  return stops[Math.min(index, stops.length - 1)]
 }
 
 type ShaderUniforms = Record<string, { value: unknown }>
@@ -82,6 +100,12 @@ const TRANSITION_KEYS: Array<keyof ShaderGradientOptions> = [
   'cameraZoom',
   'brightness',
   'grainBlending',
+  'bloomStrength',
+  'bloomRadius',
+  'bloomThreshold',
+  'vignetteStrength',
+  'vignetteSoftness',
+  'chromaticAberrationStrength',
   'fov',
   'pixelDensity',
 ]
@@ -170,7 +194,7 @@ export class ShaderGradient {
   private container: HTMLElement
   private options: ShaderGradientOptions
   private currentOptions: ShaderGradientOptions
-  private currentColors: Record<'color1' | 'color2' | 'color3', [number, number, number]>
+  private currentColors: RGB[]
 
   private renderer: WebGLRenderer | null = null
   private scene: Scene | null = null
@@ -184,6 +208,9 @@ export class ShaderGradient {
   private pmremGenerator: PMREMGenerator | null = null
   private composer: EffectComposer | null = null
   private grainPass: ShaderPass | null = null
+  private bloomPass: UnrealBloomPass | null = null
+  private vignettePass: ShaderPass | null = null
+  private chromaticAberrationPass: ShaderPass | null = null
   private environmentTarget: WebGLRenderTarget | null = null
   private environmentKey = ''
   private environmentRequestId = 0
@@ -195,11 +222,7 @@ export class ShaderGradient {
     this.container = container
     this.options = resolveShaderGradientOptions(options)
     this.currentOptions = { ...this.options }
-    this.currentColors = {
-      color1: hexToRgb(this.options.color1),
-      color2: hexToRgb(this.options.color2),
-      color3: hexToRgb(this.options.color3),
-    }
+    this.currentColors = buildColorStops(this.options)
 
     ensureShaderChunkCompat()
     this.initScene()
@@ -231,11 +254,7 @@ export class ShaderGradient {
 
     if (!next.enableTransition) {
       this.currentOptions = { ...next }
-      this.currentColors = {
-        color1: hexToRgb(next.color1),
-        color2: hexToRgb(next.color2),
-        color3: hexToRgb(next.color3),
-      }
+      this.currentColors = buildColorStops(next)
     }
 
     if (requiresRebuild) {
@@ -292,6 +311,12 @@ export class ShaderGradient {
     this.pmremGenerator = null
     this.grainPass?.dispose()
     this.grainPass = null
+    this.bloomPass?.dispose()
+    this.bloomPass = null
+    this.vignettePass?.dispose()
+    this.vignettePass = null
+    this.chromaticAberrationPass?.dispose()
+    this.chromaticAberrationPass = null
     this.composer?.dispose()
     this.composer = null
 
@@ -314,11 +339,7 @@ export class ShaderGradient {
     this.dispose()
     this.resizeObserver = observer
     this.currentOptions = { ...this.options }
-    this.currentColors = {
-      color1: hexToRgb(this.options.color1),
-      color2: hexToRgb(this.options.color2),
-      color3: hexToRgb(this.options.color3),
-    }
+    this.currentColors = buildColorStops(this.options)
     this.initScene()
   }
 
@@ -422,18 +443,25 @@ export class ShaderGradient {
       uIntensity: { value: 0.5 },
       uLoop: { value: this.currentOptions.loop ? 1 : 0 },
       uLoopDuration: { value: this.currentOptions.loopDuration },
-      uC1r: { value: this.currentColors.color1[0] },
-      uC1g: { value: this.currentColors.color1[1] },
-      uC1b: { value: this.currentColors.color1[2] },
-      uC2r: { value: this.currentColors.color2[0] },
-      uC2g: { value: this.currentColors.color2[1] },
-      uC2b: { value: this.currentColors.color2[2] },
-      uC3r: { value: this.currentColors.color3[0] },
-      uC3g: { value: this.currentColors.color3[1] },
-      uC3b: { value: this.currentColors.color3[2] },
-      uColor1: { value: new THREE.Color(this.currentOptions.color1) },
-      uColor2: { value: new THREE.Color(this.currentOptions.color2) },
-      uColor3: { value: new THREE.Color(this.currentOptions.color3) },
+      uColors: {
+        value: Array.from({ length: MAX_COLOR_STOPS }, (_, i) => {
+          const rgb = colorAt(this.currentColors, i)
+          return new Vector3(rgb[0], rgb[1], rgb[2])
+        }),
+      },
+      uColorCount: { value: Math.max(2, Math.min(this.currentColors.length, MAX_COLOR_STOPS)) },
+      uC1r: { value: colorAt(this.currentColors, 0)[0] },
+      uC1g: { value: colorAt(this.currentColors, 0)[1] },
+      uC1b: { value: colorAt(this.currentColors, 0)[2] },
+      uC2r: { value: colorAt(this.currentColors, 1)[0] },
+      uC2g: { value: colorAt(this.currentColors, 1)[1] },
+      uC2b: { value: colorAt(this.currentColors, 1)[2] },
+      uC3r: { value: colorAt(this.currentColors, 2)[0] },
+      uC3g: { value: colorAt(this.currentColors, 2)[1] },
+      uC3b: { value: colorAt(this.currentColors, 2)[2] },
+      uColor1: { value: new THREE.Color(this.currentOptions.colors[0] ?? '#000000') },
+      uColor2: { value: new THREE.Color(this.currentOptions.colors[1] ?? this.currentOptions.colors[0] ?? '#000000') },
+      uColor3: { value: new THREE.Color(this.currentOptions.colors[2] ?? this.currentOptions.colors[0] ?? '#000000') },
       uTransparency: { value: 0.1 },
       uRefraction: { value: 1.5 },
       uChromaticAberration: { value: 0.1 },
@@ -461,15 +489,22 @@ export class ShaderGradient {
       ) as never
     }
 
-    for (const key of ['color1', 'color2', 'color3'] as const) {
-      this.currentColors[key] = dampColor(
-        this.currentColors[key],
-        hexToRgb(this.options[key]),
+    const targetColors = this.options.colors
+    while (this.currentColors.length < targetColors.length) {
+      this.currentColors.push(hexToRgb(targetColors[this.currentColors.length]))
+    }
+    while (this.currentColors.length > targetColors.length) {
+      this.currentColors.pop()
+    }
+    for (let i = 0; i < this.currentColors.length; i++) {
+      this.currentColors[i] = dampColor(
+        this.currentColors[i],
+        hexToRgb(targetColors[i]),
         smoothing,
         delta,
       )
-      this.currentOptions[key] = rgbToHex(this.currentColors[key]) as never
     }
+    this.currentOptions.colors = this.currentColors.map(rgb => rgbToHex(rgb))
 
     for (const key of [
       'animate',
@@ -479,6 +514,9 @@ export class ShaderGradient {
       'lightType',
       'envPreset',
       'grain',
+      'bloom',
+      'vignette',
+      'chromaticAberration',
       'toggleAxis',
       'zoomOut',
       'hoverState',
@@ -534,23 +572,40 @@ export class ShaderGradient {
       this.shaderUniforms.uAmplitude.value = this.currentOptions.uAmplitude
       this.shaderUniforms.uLoop.value = this.currentOptions.loop ? 1 : 0
       this.shaderUniforms.uLoopDuration.value = this.currentOptions.loopDuration
-      this.shaderUniforms.uC1r.value = this.currentColors.color1[0]
-      this.shaderUniforms.uC1g.value = this.currentColors.color1[1]
-      this.shaderUniforms.uC1b.value = this.currentColors.color1[2]
-      this.shaderUniforms.uC2r.value = this.currentColors.color2[0]
-      this.shaderUniforms.uC2g.value = this.currentColors.color2[1]
-      this.shaderUniforms.uC2b.value = this.currentColors.color2[2]
-      this.shaderUniforms.uC3r.value = this.currentColors.color3[0]
-      this.shaderUniforms.uC3g.value = this.currentColors.color3[1]
-      this.shaderUniforms.uC3b.value = this.currentColors.color3[2]
-      if (this.shaderUniforms.uColor1) {
-        this.shaderUniforms.uColor1.value = new THREE.Color(this.currentOptions.color1)
+      const c1 = colorAt(this.currentColors, 0)
+      const c2 = colorAt(this.currentColors, 1)
+      const c3 = colorAt(this.currentColors, 2)
+      this.shaderUniforms.uC1r.value = c1[0]
+      this.shaderUniforms.uC1g.value = c1[1]
+      this.shaderUniforms.uC1b.value = c1[2]
+      this.shaderUniforms.uC2r.value = c2[0]
+      this.shaderUniforms.uC2g.value = c2[1]
+      this.shaderUniforms.uC2b.value = c2[2]
+      this.shaderUniforms.uC3r.value = c3[0]
+      this.shaderUniforms.uC3g.value = c3[1]
+      this.shaderUniforms.uC3b.value = c3[2]
+      const colorsUniform = this.shaderUniforms.uColors
+      if (colorsUniform && Array.isArray(colorsUniform.value)) {
+        const arr = colorsUniform.value as Vector3[]
+        for (let i = 0; i < arr.length; i++) {
+          const rgb = colorAt(this.currentColors, i)
+          arr[i].set(rgb[0], rgb[1], rgb[2])
+        }
       }
-      if (this.shaderUniforms.uColor2) {
-        this.shaderUniforms.uColor2.value = new THREE.Color(this.currentOptions.color2)
+      if (this.shaderUniforms.uColorCount) {
+        this.shaderUniforms.uColorCount.value
+          = Math.max(2, Math.min(this.currentColors.length, MAX_COLOR_STOPS))
       }
-      if (this.shaderUniforms.uColor3) {
-        this.shaderUniforms.uColor3.value = new THREE.Color(this.currentOptions.color3)
+      const colorHexes = [
+        this.currentOptions.colors[0] ?? '#000000',
+        this.currentOptions.colors[1] ?? this.currentOptions.colors[0] ?? '#000000',
+        this.currentOptions.colors[2] ?? this.currentOptions.colors[0] ?? '#000000',
+      ]
+      for (let i = 0; i < 3; i++) {
+        const uniform = this.shaderUniforms[`uColor${i + 1}`]
+        if (uniform) {
+          uniform.value = new THREE.Color(colorHexes[i])
+        }
       }
     }
 
@@ -633,6 +688,32 @@ export class ShaderGradient {
     }
   }
 
+  private get postProcessingSignature(): string {
+    const o = this.currentOptions
+    return [
+      o.bloom ? 'b' : '',
+      o.grain ? 'g' : '',
+      o.chromaticAberration ? 'c' : '',
+      o.vignette ? 'v' : '',
+    ].join('')
+  }
+
+  private postSignatureSnapshot = ''
+
+  private disposePostProcessing(): void {
+    this.grainPass?.dispose()
+    this.grainPass = null
+    this.bloomPass?.dispose()
+    this.bloomPass = null
+    this.vignettePass?.dispose()
+    this.vignettePass = null
+    this.chromaticAberrationPass?.dispose()
+    this.chromaticAberrationPass = null
+    this.composer?.dispose()
+    this.composer = null
+    this.postSignatureSnapshot = ''
+  }
+
   private syncPostProcessing(): void {
     if (!this.renderer || !this.scene || !this.camera) {
       return
@@ -640,40 +721,92 @@ export class ShaderGradient {
 
     const width = this.container.clientWidth
     const height = this.container.clientHeight
+    const o = this.currentOptions
+    const signature = this.postProcessingSignature
 
-    if (this.currentOptions.grain) {
-      if (!this.composer || !this.grainPass) {
-        const composer = new EffectComposer(this.renderer)
-        composer.setPixelRatio(Math.min(window.devicePixelRatio, this.currentOptions.pixelDensity))
-        composer.setSize(width, height)
-
-        const renderPass = new RenderPass(this.scene, this.camera)
-        const grainPass = new ShaderPass(HALFTONE_SHADER)
-
-        grainPass.enabled = true
-        grainPass.uniforms.width.value = width
-        grainPass.uniforms.height.value = height
-        grainPass.uniforms.blending.value = this.currentOptions.grainBlending
-        grainPass.uniforms.disable.value = false
-
-        composer.addPass(renderPass)
-        composer.addPass(grainPass)
-
-        this.composer = composer
-        this.grainPass = grainPass
-      }
-
-      this.grainPass.uniforms.width.value = width
-      this.grainPass.uniforms.height.value = height
-      this.grainPass.uniforms.blending.value = this.currentOptions.grainBlending
-      this.grainPass.uniforms.disable.value = false
+    // When no pass is enabled, tear everything down so the renderer draws
+    // straight to the canvas without composer overhead.
+    if (signature === '') {
+      this.disposePostProcessing()
       return
     }
 
-    this.grainPass?.dispose()
-    this.grainPass = null
-    this.composer?.dispose()
-    this.composer = null
+    // Rebuild the composer chain whenever the enabled passes change. Passes
+    // in three.js can't be re-ordered in place, so swap-rebuild is cleanest.
+    if (signature !== this.postSignatureSnapshot) {
+      this.disposePostProcessing()
+
+      const composer = new EffectComposer(this.renderer)
+      composer.setPixelRatio(Math.min(window.devicePixelRatio, o.pixelDensity))
+      composer.setSize(width, height)
+
+      const renderPass = new RenderPass(this.scene, this.camera)
+      composer.addPass(renderPass)
+
+      if (o.bloom) {
+        const bloomPass = new UnrealBloomPass(
+          new Vector2(width, height),
+          o.bloomStrength,
+          o.bloomRadius,
+          o.bloomThreshold,
+        )
+        composer.addPass(bloomPass)
+        this.bloomPass = bloomPass
+      }
+
+      if (o.chromaticAberration) {
+        const caPass = new ShaderPass(CHROMATIC_ABERRATION_SHADER)
+        caPass.uniforms.offset.value = o.chromaticAberrationStrength
+        composer.addPass(caPass)
+        this.chromaticAberrationPass = caPass
+      }
+
+      if (o.grain) {
+        const grainPass = new ShaderPass(HALFTONE_SHADER)
+        grainPass.uniforms.width.value = width
+        grainPass.uniforms.height.value = height
+        grainPass.uniforms.blending.value = o.grainBlending
+        grainPass.uniforms.disable.value = false
+        composer.addPass(grainPass)
+        this.grainPass = grainPass
+      }
+
+      if (o.vignette) {
+        const vignettePass = new ShaderPass(VIGNETTE_SHADER)
+        vignettePass.uniforms.strength.value = o.vignetteStrength
+        vignettePass.uniforms.softness.value = o.vignetteSoftness
+        composer.addPass(vignettePass)
+        this.vignettePass = vignettePass
+      }
+
+      this.composer = composer
+      this.postSignatureSnapshot = signature
+    }
+
+    // Keep pass uniforms synced even when the chain is unchanged so the user
+    // can live-tune sliders without rebuilding the composer.
+    if (this.bloomPass) {
+      this.bloomPass.strength = o.bloomStrength
+      this.bloomPass.radius = o.bloomRadius
+      this.bloomPass.threshold = o.bloomThreshold
+      this.bloomPass.setSize(width, height)
+    }
+
+    if (this.chromaticAberrationPass) {
+      this.chromaticAberrationPass.uniforms.offset.value = o.chromaticAberrationStrength
+    }
+
+    if (this.grainPass) {
+      this.grainPass.uniforms.width.value = width
+      this.grainPass.uniforms.height.value = height
+      this.grainPass.uniforms.blending.value = o.grainBlending
+      this.grainPass.uniforms.disable.value = false
+    }
+
+    if (this.vignettePass) {
+      this.vignettePass.uniforms.strength.value = o.vignetteStrength
+      this.vignettePass.uniforms.softness.value = o.vignetteSoftness
+    }
   }
 
   private syncClock(): void {
@@ -824,6 +957,7 @@ export class ShaderGradient {
       this.grainPass.uniforms.width.value = width
       this.grainPass.uniforms.height.value = height
     }
+    this.bloomPass?.setSize(width, height)
     if (this.camera) {
       this.camera.aspect = width / height
       this.camera.updateProjectionMatrix()

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { ShaderGradientPresetName } from '@shader-gradient/core'
+import type { ShaderGradientPresetName, ShaderName } from '@shader-gradient/core'
 import type { Root } from 'react-dom/client'
 import {
+  OFFICIAL_SHADERS,
   parseShaderGradientQuery,
   presetEntries,
   presets,
@@ -53,6 +54,25 @@ const presetBaseline = computed(() =>
     : resolveShaderGradientOptions({}),
 )
 const resolvedState = computed(() => resolveShaderGradientOptions(state))
+const OFFICIAL_SHADER_SET = new Set<ShaderName>(OFFICIAL_SHADERS)
+const shaderIsOfficial = computed(() =>
+  OFFICIAL_SHADER_SET.has(state.shader as ShaderName),
+)
+
+function isSameArray(a: unknown, b: unknown): boolean {
+  if (!Array.isArray(a) || !Array.isArray(b)) {
+    return false
+  }
+  if (a.length !== b.length) {
+    return false
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false
+    }
+  }
+  return true
+}
 
 function diffAgainstPreset(keys: readonly string[]): Record<string, unknown> {
   const baseline = presetBaseline.value as Record<string, unknown>
@@ -63,7 +83,14 @@ function diffAgainstPreset(keys: readonly string[]): Record<string, unknown> {
     if (cur === undefined) {
       continue
     }
-    if (cur !== baseline[key]) {
+    const base = baseline[key]
+    if (Array.isArray(cur) || Array.isArray(base)) {
+      if (!isSameArray(cur, base)) {
+        result[key] = cur
+      }
+      continue
+    }
+    if (cur !== base) {
       result[key] = cur
     }
   }
@@ -94,16 +121,35 @@ onMounted(() => {
     gradient = new ShaderGradient(canvasRef.value, { ...runtimeState.value, onCameraUpdate })
   }
 
-  if (officialCompareRef.value) {
-    officialRoot = createRoot(officialCompareRef.value)
-    officialRoot.render(React.createElement(OfficialPreview, { state: { ...runtimeState.value } }))
-  }
+  mountOfficialPreview()
 
   requestAnimationFrame(() => {
     transitionReady.value = true
     gradient?.update({ ...runtimeState.value })
     officialRoot?.render(React.createElement(OfficialPreview, { state: { ...runtimeState.value } }))
   })
+})
+
+function mountOfficialPreview() {
+  if (!shaderIsOfficial.value || officialRoot || !officialCompareRef.value) {
+    return
+  }
+  officialRoot = createRoot(officialCompareRef.value)
+  officialRoot.render(React.createElement(OfficialPreview, { state: { ...runtimeState.value } }))
+}
+
+function unmountOfficialPreview() {
+  officialRoot?.unmount()
+  officialRoot = null
+}
+
+watch(shaderIsOfficial, (isOfficial) => {
+  if (isOfficial) {
+    mountOfficialPreview()
+  }
+  else {
+    unmountOfficialPreview()
+  }
 })
 
 watch(state, () => {
@@ -163,6 +209,30 @@ function setCheck(key: string, e: Event) {
   ;(state as Record<string, unknown>)[key] = checked
 }
 
+const MAX_COLOR_STOPS = 9
+
+function setColor(i: number, e: Event) {
+  const next = (state.colors as string[]).slice()
+  next[i] = (e.target as HTMLInputElement).value
+  state.colors = next
+}
+
+function addColor() {
+  const current = state.colors as string[]
+  if (current.length >= MAX_COLOR_STOPS) {
+    return
+  }
+  state.colors = [...current, '#ffffff']
+}
+
+function removeColor(i: number) {
+  const current = state.colors as string[]
+  if (current.length <= 1) {
+    return
+  }
+  state.colors = current.filter((_, idx) => idx !== i)
+}
+
 function formatLiteral(value: unknown): string {
   if (typeof value === 'string') {
     return JSON.stringify(value)
@@ -187,7 +257,7 @@ function formatObjectLiteral(input: Record<string, unknown>, indent = 2): string
 }
 
 const noiseSliders = [
-  { key: 'uSpeed', label: 'Speed', min: 0, max: 1.2, step: 0.01 },
+  { key: 'uSpeed', label: 'Speed', min: 0, max: 4, step: 0.01 },
   { key: 'uDensity', label: 'Density', min: 0.2, max: 3, step: 0.1 },
   { key: 'uStrength', label: 'Strength', min: 0, max: 8, step: 0.1 },
   { key: 'uAmplitude', label: 'Amplitude', min: 0, max: 8, step: 0.1 },
@@ -208,10 +278,26 @@ const cameraSliders = [
 
 const toggles = [
   { key: 'animate', label: 'Animate' },
-  { key: 'grain', label: 'Grain' },
   { key: 'wireframe', label: 'Wireframe' },
   { key: 'enableCameraControls', label: 'Drag Control' },
   { key: 'toggleAxis', label: 'Axis' },
+]
+
+const postFxToggles = [
+  { key: 'grain', label: 'Grain (Halftone)' },
+  { key: 'bloom', label: 'Bloom' },
+  { key: 'vignette', label: 'Vignette' },
+  { key: 'chromaticAberration', label: 'Chromatic Aberration' },
+]
+
+const postFxSliders = [
+  { key: 'grainBlending', label: 'Grain Blend', min: 0, max: 1, step: 0.01, gate: 'grain' },
+  { key: 'bloomStrength', label: 'Bloom Strength', min: 0, max: 3, step: 0.01, gate: 'bloom' },
+  { key: 'bloomRadius', label: 'Bloom Radius', min: 0, max: 1, step: 0.01, gate: 'bloom' },
+  { key: 'bloomThreshold', label: 'Bloom Threshold', min: 0, max: 1, step: 0.01, gate: 'bloom' },
+  { key: 'vignetteStrength', label: 'Vignette Strength', min: 0, max: 2, step: 0.01, gate: 'vignette' },
+  { key: 'vignetteSoftness', label: 'Vignette Softness', min: 0, max: 1, step: 0.01, gate: 'vignette' },
+  { key: 'chromaticAberrationStrength', label: 'CA Offset', min: 0, max: 0.05, step: 0.001, gate: 'chromaticAberration' },
 ]
 
 const canvasExportKeys = [
@@ -241,9 +327,7 @@ const gradientExportKeys = [
   'rotationX',
   'rotationY',
   'rotationZ',
-  'color1',
-  'color2',
-  'color3',
+  'colors',
   'reflection',
   'wireframe',
   'shader',
@@ -256,6 +340,15 @@ const gradientExportKeys = [
   'envPreset',
   'grain',
   'grainBlending',
+  'bloom',
+  'bloomStrength',
+  'bloomRadius',
+  'bloomThreshold',
+  'vignette',
+  'vignetteStrength',
+  'vignetteSoftness',
+  'chromaticAberration',
+  'chromaticAberrationStrength',
   'toggleAxis',
   'zoomOut',
 ] as const
@@ -271,6 +364,10 @@ const queryString = computed(() => {
   const params = new URLSearchParams()
   for (const [k, v] of Object.entries(combined)) {
     if (v === undefined) {
+      continue
+    }
+    if (Array.isArray(v)) {
+      params.set(k, v.join(','))
       continue
     }
     params.set(k, String(v))
@@ -362,25 +459,49 @@ function copyQuery() {
       class="gradient-bg"
     />
 
-    <section class="compare-dock">
-      <header class="compare-header">
-        <div>
-          <p class="compare-kicker">
-            Preset Compare
-          </p>
-          <h2>Official vs Local</h2>
-        </div>
-        <p class="compare-note">
-          Same preset, same controls. The page background is local core; the card below is official
-          <code>@shadergradient/react</code>.
-        </p>
-      </header>
-      <div class="compare-grid">
-        <div class="compare-preview-block">
+    <section
+      class="compare-dock"
+      :class="{ 'compare-dock-minimized': !shaderIsOfficial }"
+    >
+      <template v-if="shaderIsOfficial">
+        <div class="compare-preview-wrapper">
           <div
             ref="officialCompareRef"
             class="official-preview"
           />
+          <span class="compare-tag compare-tag-official">
+            Official <code>@shadergradient/react</code>
+          </span>
+          <span class="compare-tag compare-tag-local">
+            Local · background
+          </span>
+        </div>
+      </template>
+      <div
+        v-else
+        class="compare-empty"
+      >
+        <span class="compare-empty-icon" aria-hidden="true">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 2l2.39 4.84L20 8l-4 3.9.94 5.5L12 14.77 7.06 17.4 8 11.9 4 8l5.61-1.16L12 2z" />
+          </svg>
+        </span>
+        <div class="compare-empty-body">
+          <p class="compare-kicker">
+            Original shader
+          </p>
+          <p class="compare-empty-text">
+            <code>{{ state.shader }}</code> is unique to this fork — no official comparison available.
+          </p>
         </div>
       </div>
     </section>
@@ -556,6 +677,12 @@ function copyQuery() {
                   <option value="pulse">
                     pulse
                   </option>
+                  <option value="spectrum">
+                    spectrum
+                  </option>
+                  <option value="halo">
+                    halo
+                  </option>
                 </select>
               </div>
             </div>
@@ -566,28 +693,44 @@ function copyQuery() {
             <h2 class="section-title">
               Colors
             </h2>
-            <div class="color-row">
-              <label class="color-field">
-                <input
-                  v-model="state.color1"
-                  type="color"
+            <div class="color-row color-row-dynamic">
+              <div
+                v-for="(c, i) in (state.colors as string[])"
+                :key="i"
+                class="color-field"
+              >
+                <div class="color-swatch">
+                  <input
+                    type="color"
+                    :value="c"
+                    @input="setColor(i, $event)"
+                  >
+                  <button
+                    v-if="(state.colors as string[]).length > 1"
+                    type="button"
+                    class="color-remove"
+                    title="Remove color"
+                    @click="removeColor(i)"
+                  >
+                    ×
+                  </button>
+                </div>
+                <span>Color {{ i + 1 }}</span>
+              </div>
+              <div
+                v-if="(state.colors as string[]).length < MAX_COLOR_STOPS"
+                class="color-field color-field-add"
+              >
+                <button
+                  type="button"
+                  class="color-add"
+                  title="Add color"
+                  @click="addColor"
                 >
-                <span>Color 1</span>
-              </label>
-              <label class="color-field">
-                <input
-                  v-model="state.color2"
-                  type="color"
-                >
-                <span>Color 2</span>
-              </label>
-              <label class="color-field">
-                <input
-                  v-model="state.color3"
-                  type="color"
-                >
-                <span>Color 3</span>
-              </label>
+                  +
+                </button>
+                <span>Add</span>
+              </div>
             </div>
           </section>
 
@@ -720,6 +863,49 @@ function copyQuery() {
                 >
                 <span>{{ t.label }}</span>
               </label>
+            </div>
+          </section>
+
+          <!-- Post FX -->
+          <section class="section">
+            <h2 class="section-title">
+              Post FX
+            </h2>
+            <div class="toggle-grid">
+              <label
+                v-for="t in postFxToggles"
+                :key="t.key"
+                class="toggle-field"
+              >
+                <input
+                  type="checkbox"
+                  :checked="toBool((state as Record<string, unknown>)[t.key])"
+                  @change="setCheck(t.key, $event)"
+                >
+                <span>{{ t.label }}</span>
+              </label>
+            </div>
+            <div class="slider-group slider-group-mt">
+              <div
+                v-for="s in postFxSliders"
+                v-show="toBool((state as Record<string, unknown>)[s.gate])"
+                :key="s.key"
+                class="slider-field"
+              >
+                <div class="slider-header">
+                  <label>{{ s.label }}</label>
+                  <span class="slider-val">{{ formatNum(s.key) }}</span>
+                </div>
+                <input
+                  type="range"
+                  :min="s.min"
+                  :max="s.max"
+                  :step="s.step"
+                  :value="getNum(s.key)"
+                  :style="{ '--fill': sliderFill(s.min, s.max, s.key) }"
+                  @input="setNum(s.key, $event)"
+                >
+              </div>
             </div>
           </section>
 

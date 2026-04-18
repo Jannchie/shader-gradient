@@ -4,7 +4,15 @@ export type RangeState = 'enabled' | 'disabled'
 export type ShaderControlMode = 'props' | 'query'
 export type LightType = '3d' | 'env'
 export type EnvironmentPreset = 'city' | 'dawn' | 'lobby'
-export type ShaderName = 'defaults' | 'positionMix' | 'cosmic' | 'glass' | 'lava' | 'aurora' | 'marble' | 'pulse'
+export type ShaderName = 'defaults' | 'positionMix' | 'cosmic' | 'glass' | 'lava' | 'aurora' | 'marble' | 'pulse' | 'spectrum' | 'halo'
+
+// Shaders that the upstream `@shadergradient/react` package also ships. Anything
+// outside this set is original to this fork and cannot be rendered by the
+// official comparison preview.
+export const OFFICIAL_SHADERS: readonly ShaderName[] = ['defaults', 'positionMix', 'cosmic', 'glass']
+
+// Hard cap for the spectrum shader uniform array.
+export const MAX_COLOR_STOPS = 9
 
 export type ShaderGradientPresetName
   = | 'halo'
@@ -25,6 +33,8 @@ export type ShaderGradientPresetName
   | 'jade'
   | 'neonGrid'
   | 'heartbeat'
+  | 'chromatic'
+  | 'clubLights'
 
 export interface ShaderGradientCameraUpdate {
   cAzimuthAngle: number
@@ -65,9 +75,16 @@ export interface ShaderGradientInput {
   rotationY?: number
   rotationZ?: number
 
+  colors?: string[]
+  // Legacy individual color fields — kept for URL/backwards compatibility.
+  // Prefer `colors` for new code. When both are provided, `colors` wins.
   color1?: string
   color2?: string
   color3?: string
+  color4?: string
+  color5?: string
+  color6?: string
+  color7?: string
 
   reflection?: number
   wireframe?: boolean
@@ -87,6 +104,18 @@ export interface ShaderGradientInput {
   envPreset?: EnvironmentPreset
   grain?: boolean | ToggleState
   grainBlending?: number
+
+  bloom?: boolean | ToggleState
+  bloomStrength?: number
+  bloomRadius?: number
+  bloomThreshold?: number
+
+  vignette?: boolean | ToggleState
+  vignetteStrength?: number
+  vignetteSoftness?: number
+
+  chromaticAberration?: boolean | ToggleState
+  chromaticAberrationStrength?: number
 
   toggleAxis?: boolean
   axesHelper?: boolean | ToggleState
@@ -134,9 +163,7 @@ export interface ShaderGradientOptions {
   rotationY: number
   rotationZ: number
 
-  color1: string
-  color2: string
-  color3: string
+  colors: string[]
 
   reflection: number
   wireframe: boolean
@@ -153,6 +180,18 @@ export interface ShaderGradientOptions {
   envPreset: EnvironmentPreset
   grain: boolean
   grainBlending: number
+
+  bloom: boolean
+  bloomStrength: number
+  bloomRadius: number
+  bloomThreshold: number
+
+  vignette: boolean
+  vignetteStrength: number
+  vignetteSoftness: number
+
+  chromaticAberration: boolean
+  chromaticAberrationStrength: number
 
   toggleAxis: boolean
   zoomOut: boolean

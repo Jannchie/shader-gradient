@@ -26,9 +26,7 @@ export const DEFAULT_OPTIONS: ShaderGradientOptions = {
   rotationY: 10,
   rotationZ: 50,
 
-  color1: '#ff5005',
-  color2: '#dbba95',
-  color3: '#d0bce1',
+  colors: ['#ff5005', '#dbba95', '#d0bce1'],
 
   reflection: 0.1,
   wireframe: false,
@@ -45,6 +43,18 @@ export const DEFAULT_OPTIONS: ShaderGradientOptions = {
   envPreset: 'city',
   grain: false,
   grainBlending: 1,
+
+  bloom: false,
+  bloomStrength: 0.6,
+  bloomRadius: 0.5,
+  bloomThreshold: 0.4,
+
+  vignette: false,
+  vignetteStrength: 0.8,
+  vignetteSoftness: 0.6,
+
+  chromaticAberration: false,
+  chromaticAberrationStrength: 0.004,
 
   toggleAxis: false,
   zoomOut: false,
