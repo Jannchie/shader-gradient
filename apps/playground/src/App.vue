@@ -111,8 +111,8 @@ function diffAgainstPreset(keys: readonly string[]): Record<string, unknown> {
 }
 
 const runtimeState = computed(() => ({
-  ...state,
-  enableTransition: transitionReady.value ? state.enableTransition : false,
+  ...resolvedState.value,
+  enableTransition: transitionReady.value ? resolvedState.value.enableTransition : false,
 }))
 
 const exportModes = [

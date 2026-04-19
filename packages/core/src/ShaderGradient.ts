@@ -172,7 +172,6 @@ function loadEnvironmentTarget(
 
 function createMaterial(options: ShaderGradientOptions): MeshPhysicalMaterial {
   const isGlass = options.shader === 'glass'
-
   return new MeshPhysicalMaterial({
     userData: {},
     metalness: isGlass ? 0 : 0.2,
@@ -309,16 +308,7 @@ export class ShaderGradient {
 
     this.pmremGenerator?.dispose()
     this.pmremGenerator = null
-    this.grainPass?.dispose()
-    this.grainPass = null
-    this.bloomPass?.dispose()
-    this.bloomPass = null
-    this.vignettePass?.dispose()
-    this.vignettePass = null
-    this.chromaticAberrationPass?.dispose()
-    this.chromaticAberrationPass = null
-    this.composer?.dispose()
-    this.composer = null
+    this.disposePostProcessing()
 
     if (this.renderer) {
       this.renderer.dispose()
