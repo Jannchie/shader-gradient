@@ -2,6 +2,7 @@
 import type { ShaderGradientPresetName, ShaderName } from '@shader-gradient/core'
 import type { Root } from 'react-dom/client'
 import {
+  BASE_PRESET_PROPS,
   OFFICIAL_SHADERS,
   parseShaderGradientQuery,
   presetEntries,
@@ -11,7 +12,7 @@ import {
 } from '@shader-gradient/core'
 import React from 'react'
 import { createRoot } from 'react-dom/client'
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { OfficialPreview } from './previews/OfficialPreview'
 
 const canvasRef = ref<HTMLElement>()
@@ -37,10 +38,22 @@ const initialPreset: ShaderGradientPresetName
     ? (queryInput.preset as ShaderGradientPresetName)
     : 'halo'
 
+function getPresetState(name: string) {
+  const preset = presets[name as ShaderGradientPresetName]
+  if (!preset) {
+    return null
+  }
+
+  return {
+    preset: name,
+    ...BASE_PRESET_PROPS,
+    ...preset.props,
+  }
+}
+
 const state = reactive({
   ...PLAYGROUND_DEFAULTS,
-  preset: initialPreset as string,
-  ...presets[initialPreset].props,
+  ...getPresetState(initialPreset),
   ...queryInput,
 })
 
@@ -143,9 +156,11 @@ function unmountOfficialPreview() {
   officialRoot = null
 }
 
-watch(shaderIsOfficial, (isOfficial) => {
+watch(shaderIsOfficial, async (isOfficial) => {
   if (isOfficial) {
+    await nextTick()
     mountOfficialPreview()
+    officialRoot?.render(React.createElement(OfficialPreview, { state: { ...runtimeState.value } }))
   }
   else {
     unmountOfficialPreview()
@@ -198,9 +213,9 @@ function sliderFill(min: number, max: number, key: string): string {
 }
 
 function selectPreset(name: string) {
-  const preset = presets[name as keyof typeof presets]
-  if (preset) {
-    Object.assign(state, { preset: name, ...preset.props })
+  const presetState = getPresetState(name)
+  if (presetState) {
+    Object.assign(state, presetState)
   }
 }
 
