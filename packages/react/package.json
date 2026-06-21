@@ -4,6 +4,11 @@
   "version": "0.3.0",
   "description": "React bindings for @shader-gradient/core",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jannchie/shader-gradient.git",
+    "directory": "packages/react"
+  },
   "keywords": [
     "shader",
     "gradient",
