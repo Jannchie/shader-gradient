@@ -1,3 +1,26 @@
+## v0.3.0
+
+[v0.2.0...v0.3.0](https://github.com/Jannchie/shader-gradient/compare/v0.2.0...v0.3.0)
+
+### :sparkles: Features
+
+- **core**: add per-channel angle, shape, blend mode & greyscale to halftone - By [Jannchie](mailto:jannchie@gmail.com) in [5031e3e](https://github.com/Jannchie/shader-gradient/commit/5031e3e)
+- **playground**: expose halftone shape, per-channel angle & blend controls - By [Jannchie](mailto:jannchie@gmail.com) in [3614c39](https://github.com/Jannchie/shader-gradient/commit/3614c39)
+- **core**: add multi-stop colors and post-fx - By [Jannchie](mailto:jannchie@gmail.com) in [3c54542](https://github.com/Jannchie/shader-gradient/commit/3c54542)
+
+### :adhesive_bandage: Fixes
+
+- **playground**: fix preset state and preview rendering - By [Jannchie](mailto:jannchie@gmail.com) in [eb51b65](https://github.com/Jannchie/shader-gradient/commit/eb51b65)
+- use resolvedState for runtimeState && consolidate postprocessing disposal - By [Jannchie](mailto:jannchie@gmail.com) in [577672a](https://github.com/Jannchie/shader-gradient/commit/577672a)
+
+### :art: Refactors
+
+- **presets**: isolate preset defaults and export baseline - By [Jannchie](mailto:jannchie@gmail.com) in [2d41a68](https://github.com/Jannchie/shader-gradient/commit/2d41a68)
+
+### :boom: Breaking Changes
+
+- **core**: `feat(core)!: add multi-stop colors and post-fx` changes the colors API surface - By [Jannchie](mailto:jannchie@gmail.com) in [3c54542](https://github.com/Jannchie/shader-gradient/commit/3c54542)
+
 ## v0.2.0
 
 [v0.1.0...v0.2.0](https://github.com/Jannchie/shader-gradient/compare/v0.1.0...v0.2.0)
