@@ -1,4 +1,4 @@
-import type { ShaderGradientInput, ShaderGradientOptions, ShaderName } from './types'
+import type { HalftoneBlendingMode, HalftoneShape, ShaderGradientInput, ShaderGradientOptions, ShaderName } from './types'
 import { DEFAULT_OPTIONS } from './defaults'
 import { presets } from './presets'
 import { MAX_COLOR_STOPS } from './types'
@@ -21,6 +21,16 @@ function mergeColorStops(input: Partial<ShaderGradientInput>): string[] {
 
 const KNOWN_PRESETS = new Set(Object.keys(presets))
 const KNOWN_SHADERS = new Set<ShaderName>(['defaults', 'positionMix', 'cosmic', 'glass', 'lava', 'aurora', 'marble', 'pulse', 'spectrum', 'halo'])
+const HALFTONE_SHAPES = new Set<HalftoneShape>(['dot', 'ellipse', 'line', 'square'])
+const HALFTONE_BLENDING_MODES = new Set<HalftoneBlendingMode>(['linear', 'multiply', 'add', 'lighter', 'darker'])
+
+function parseHalftoneShape(value: unknown, fallback: HalftoneShape): HalftoneShape {
+  return typeof value === 'string' && HALFTONE_SHAPES.has(value as HalftoneShape) ? (value as HalftoneShape) : fallback
+}
+
+function parseHalftoneBlendingMode(value: unknown, fallback: HalftoneBlendingMode): HalftoneBlendingMode {
+  return typeof value === 'string' && HALFTONE_BLENDING_MODES.has(value as HalftoneBlendingMode) ? (value as HalftoneBlendingMode) : fallback
+}
 
 type QueryValue = string | number | boolean
 
@@ -183,6 +193,36 @@ export function parseShaderGradientQuery(urlString: string): Partial<ShaderGradi
   if (has('chromaticAberrationStrength')) {
     result.chromaticAberrationStrength = parseNumber(params.chromaticAberrationStrength, DEFAULT_OPTIONS.chromaticAberrationStrength)
   }
+  if (has('halftone')) {
+    result.halftone = parseBoolean(params.halftone, DEFAULT_OPTIONS.halftone)
+  }
+  if (has('halftoneRadius')) {
+    result.halftoneRadius = parseNumber(params.halftoneRadius, DEFAULT_OPTIONS.halftoneRadius)
+  }
+  if (has('halftoneScatter')) {
+    result.halftoneScatter = parseNumber(params.halftoneScatter, DEFAULT_OPTIONS.halftoneScatter)
+  }
+  if (has('halftoneBlending')) {
+    result.halftoneBlending = parseNumber(params.halftoneBlending, DEFAULT_OPTIONS.halftoneBlending)
+  }
+  if (has('halftoneShape')) {
+    result.halftoneShape = parseHalftoneShape(params.halftoneShape, DEFAULT_OPTIONS.halftoneShape)
+  }
+  if (has('halftoneAngleR')) {
+    result.halftoneAngleR = parseNumber(params.halftoneAngleR, DEFAULT_OPTIONS.halftoneAngleR)
+  }
+  if (has('halftoneAngleG')) {
+    result.halftoneAngleG = parseNumber(params.halftoneAngleG, DEFAULT_OPTIONS.halftoneAngleG)
+  }
+  if (has('halftoneAngleB')) {
+    result.halftoneAngleB = parseNumber(params.halftoneAngleB, DEFAULT_OPTIONS.halftoneAngleB)
+  }
+  if (has('halftoneGreyscale')) {
+    result.halftoneGreyscale = parseBoolean(params.halftoneGreyscale, DEFAULT_OPTIONS.halftoneGreyscale)
+  }
+  if (has('halftoneBlendingMode')) {
+    result.halftoneBlendingMode = parseHalftoneBlendingMode(params.halftoneBlendingMode, DEFAULT_OPTIONS.halftoneBlendingMode)
+  }
   if (has('toggleAxis')) {
     result.toggleAxis = parseBoolean(params.toggleAxis, DEFAULT_OPTIONS.toggleAxis)
   }
@@ -279,6 +319,17 @@ export function resolveShaderGradientOptions(input: Partial<ShaderGradientInput>
     chromaticAberration: parseToggle(merged.chromaticAberration, DEFAULT_OPTIONS.chromaticAberration),
     chromaticAberrationStrength: clamp(parseNumber(merged.chromaticAberrationStrength, DEFAULT_OPTIONS.chromaticAberrationStrength), 0, 0.05),
 
+    halftone: parseToggle(merged.halftone, DEFAULT_OPTIONS.halftone),
+    halftoneRadius: clamp(parseNumber(merged.halftoneRadius, DEFAULT_OPTIONS.halftoneRadius), 2, 60),
+    halftoneScatter: clamp(parseNumber(merged.halftoneScatter, DEFAULT_OPTIONS.halftoneScatter), 0, 1),
+    halftoneBlending: clamp(parseNumber(merged.halftoneBlending, DEFAULT_OPTIONS.halftoneBlending), 0, 1),
+    halftoneShape: parseHalftoneShape(merged.halftoneShape, DEFAULT_OPTIONS.halftoneShape),
+    halftoneAngleR: clamp(parseNumber(merged.halftoneAngleR, DEFAULT_OPTIONS.halftoneAngleR), 0, 360),
+    halftoneAngleG: clamp(parseNumber(merged.halftoneAngleG, DEFAULT_OPTIONS.halftoneAngleG), 0, 360),
+    halftoneAngleB: clamp(parseNumber(merged.halftoneAngleB, DEFAULT_OPTIONS.halftoneAngleB), 0, 360),
+    halftoneGreyscale: parseBoolean(merged.halftoneGreyscale, DEFAULT_OPTIONS.halftoneGreyscale),
+    halftoneBlendingMode: parseHalftoneBlendingMode(merged.halftoneBlendingMode, DEFAULT_OPTIONS.halftoneBlendingMode),
+
     toggleAxis: parseBoolean(merged.toggleAxis ?? merged.axesHelper, DEFAULT_OPTIONS.toggleAxis),
     zoomOut: parseBoolean(merged.zoomOut, DEFAULT_OPTIONS.zoomOut),
     hoverState: typeof merged.hoverState === 'string' ? merged.hoverState : DEFAULT_OPTIONS.hoverState,
@@ -287,6 +338,7 @@ export function resolveShaderGradientOptions(input: Partial<ShaderGradientInput>
     enableTransition: parseBoolean(merged.enableTransition, DEFAULT_OPTIONS.enableTransition),
     enableCameraControls: parseBoolean(merged.enableCameraControls, DEFAULT_OPTIONS.enableCameraControls),
     enableCameraUpdate: parseBoolean(merged.enableCameraUpdate, DEFAULT_OPTIONS.enableCameraUpdate),
+    manualRender: parseBoolean(merged.manualRender, DEFAULT_OPTIONS.manualRender),
 
     pixelDensity: clamp(parseNumber(merged.pixelDensity ?? merged.pixelRatio, DEFAULT_OPTIONS.pixelDensity), 0.5, 3),
     preserveDrawingBuffer: parseBoolean(
@@ -346,6 +398,16 @@ export function serializeShaderGradientOptions(input: Partial<ShaderGradientInpu
     ['vignetteSoftness', String(options.vignetteSoftness)],
     ['chromaticAberration', options.chromaticAberration ? 'on' : 'off'],
     ['chromaticAberrationStrength', String(options.chromaticAberrationStrength)],
+    ['halftone', options.halftone ? 'on' : 'off'],
+    ['halftoneRadius', String(options.halftoneRadius)],
+    ['halftoneScatter', String(options.halftoneScatter)],
+    ['halftoneBlending', String(options.halftoneBlending)],
+    ['halftoneShape', options.halftoneShape],
+    ['halftoneAngleR', String(options.halftoneAngleR)],
+    ['halftoneAngleG', String(options.halftoneAngleG)],
+    ['halftoneAngleB', String(options.halftoneAngleB)],
+    ['halftoneGreyscale', String(options.halftoneGreyscale)],
+    ['halftoneBlendingMode', options.halftoneBlendingMode],
     ['toggleAxis', String(options.toggleAxis)],
     ['pixelDensity', String(options.pixelDensity)],
     ['fov', String(options.fov)],

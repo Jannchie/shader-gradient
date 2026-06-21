@@ -4,6 +4,8 @@ export type RangeState = 'enabled' | 'disabled'
 export type ShaderControlMode = 'props' | 'query'
 export type LightType = '3d' | 'env'
 export type EnvironmentPreset = 'city' | 'dawn' | 'lobby'
+export type HalftoneShape = 'dot' | 'ellipse' | 'line' | 'square'
+export type HalftoneBlendingMode = 'linear' | 'multiply' | 'add' | 'lighter' | 'darker'
 export type ShaderName = 'defaults' | 'positionMix' | 'cosmic' | 'glass' | 'lava' | 'aurora' | 'marble' | 'pulse' | 'spectrum' | 'halo'
 
 // Shaders that the upstream `@shadergradient/react` package also ships. Anything
@@ -35,6 +37,10 @@ export type ShaderGradientPresetName
   | 'heartbeat'
   | 'chromatic'
   | 'clubLights'
+  | 'popArt'
+  | 'newsprint'
+  | 'comicStrip'
+  | 'risograph'
 
 export interface ShaderGradientCameraUpdate {
   cAzimuthAngle: number
@@ -117,6 +123,19 @@ export interface ShaderGradientInput {
   chromaticAberration?: boolean | ToggleState
   chromaticAberrationStrength?: number
 
+  // Color halftone — turns the image into rotated CMY-style dot screens.
+  halftone?: boolean | ToggleState
+  halftoneRadius?: number
+  halftoneScatter?: number
+  halftoneBlending?: number
+  halftoneShape?: HalftoneShape
+  // Per-channel screen rotation in degrees (the classic CMY angle separation).
+  halftoneAngleR?: number
+  halftoneAngleG?: number
+  halftoneAngleB?: number
+  halftoneGreyscale?: boolean
+  halftoneBlendingMode?: HalftoneBlendingMode
+
   toggleAxis?: boolean
   axesHelper?: boolean | ToggleState
   zoomOut?: boolean
@@ -126,6 +145,11 @@ export interface ShaderGradientInput {
   enableTransition?: boolean
   enableCameraControls?: boolean
   enableCameraUpdate?: boolean
+
+  // When true, the instance does NOT start its own requestAnimationFrame loop.
+  // Drive rendering yourself with `renderFrame(time)` — required for
+  // frame-by-frame capture (e.g. Remotion), where time is seeked, not flowing.
+  manualRender?: boolean
 
   pixelDensity?: number
   pixelRatio?: number
@@ -193,6 +217,17 @@ export interface ShaderGradientOptions {
   chromaticAberration: boolean
   chromaticAberrationStrength: number
 
+  halftone: boolean
+  halftoneRadius: number
+  halftoneScatter: number
+  halftoneBlending: number
+  halftoneShape: HalftoneShape
+  halftoneAngleR: number
+  halftoneAngleG: number
+  halftoneAngleB: number
+  halftoneGreyscale: boolean
+  halftoneBlendingMode: HalftoneBlendingMode
+
   toggleAxis: boolean
   zoomOut: boolean
   hoverState: string
@@ -201,6 +236,7 @@ export interface ShaderGradientOptions {
   enableTransition: boolean
   enableCameraControls: boolean
   enableCameraUpdate: boolean
+  manualRender: boolean
 
   pixelDensity: number
   preserveDrawingBuffer: boolean

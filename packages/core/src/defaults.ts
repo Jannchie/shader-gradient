@@ -56,6 +56,17 @@ export const DEFAULT_OPTIONS: ShaderGradientOptions = {
   chromaticAberration: false,
   chromaticAberrationStrength: 0.004,
 
+  halftone: false,
+  halftoneRadius: 10,
+  halftoneScatter: 0,
+  halftoneBlending: 1,
+  halftoneShape: 'dot',
+  halftoneAngleR: 15,
+  halftoneAngleG: 30,
+  halftoneAngleB: 45,
+  halftoneGreyscale: false,
+  halftoneBlendingMode: 'linear',
+
   toggleAxis: false,
   zoomOut: false,
   hoverState: '',
@@ -64,6 +75,7 @@ export const DEFAULT_OPTIONS: ShaderGradientOptions = {
   enableTransition: false,
   enableCameraControls: false,
   enableCameraUpdate: false,
+  manualRender: false,
 
   pixelDensity: 2,
   preserveDrawingBuffer: false,

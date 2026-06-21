@@ -106,9 +106,30 @@ const TRANSITION_KEYS: Array<keyof ShaderGradientOptions> = [
   'vignetteStrength',
   'vignetteSoftness',
   'chromaticAberrationStrength',
+  'halftoneRadius',
+  'halftoneScatter',
+  'halftoneBlending',
+  'halftoneAngleR',
+  'halftoneAngleG',
+  'halftoneAngleB',
   'fov',
   'pixelDensity',
 ]
+
+const HALFTONE_SHAPE_VALUES: Record<string, number> = {
+  dot: 1,
+  ellipse: 2,
+  line: 3,
+  square: 4,
+}
+
+const HALFTONE_BLENDING_MODE_VALUES: Record<string, number> = {
+  linear: 1,
+  multiply: 2,
+  add: 3,
+  lighter: 4,
+  darker: 5,
+}
 
 const environmentCache = new Map<string, Promise<WebGLRenderTarget>>()
 
@@ -207,6 +228,7 @@ export class ShaderGradient {
   private pmremGenerator: PMREMGenerator | null = null
   private composer: EffectComposer | null = null
   private grainPass: ShaderPass | null = null
+  private halftonePass: ShaderPass | null = null
   private bloomPass: UnrealBloomPass | null = null
   private vignettePass: ShaderPass | null = null
   private chromaticAberrationPass: ShaderPass | null = null
@@ -279,6 +301,36 @@ export class ShaderGradient {
     }
 
     this.applyCurrentState()
+  }
+
+  /**
+   * Render a single frame deterministically. Pass `time` (seconds) to drive
+   * `uTime` directly: the same time always yields the same image and costs the
+   * same regardless of which frame it is, so frames can be seeked in any order
+   * (e.g. from Remotion). Pair with `manualRender: true` and disable
+   * `enableTransition`/`loop` so nothing depends on previous frames.
+   */
+  renderFrame(time?: number): void {
+    if (!this.renderer || !this.scene || !this.camera) {
+      return
+    }
+
+    this.applyCurrentState()
+    this.syncPostProcessing()
+
+    if (time !== undefined) {
+      this.currentOptions.uTime = time
+      if (this.shaderUniforms) {
+        this.shaderUniforms.uTime.value = time
+      }
+    }
+
+    if (this.composer) {
+      this.composer.render(0)
+    }
+    else {
+      this.renderer?.render(this.scene!, this.camera!)
+    }
   }
 
   dispose(): void {
@@ -369,6 +421,13 @@ export class ShaderGradient {
     this.syncCameraControls(false)
     this.syncPostProcessing()
     this.applyCurrentState()
+
+    // Manual mode: skip the self-driven rAF loop. The caller renders frames
+    // on demand via renderFrame(), which is what frame-by-frame tools need.
+    if (this.options.manualRender) {
+      this.renderFrame()
+      return
+    }
 
     const animate = () => {
       this.animationId = requestAnimationFrame(animate)
@@ -507,6 +566,10 @@ export class ShaderGradient {
       'bloom',
       'vignette',
       'chromaticAberration',
+      'halftone',
+      'halftoneShape',
+      'halftoneGreyscale',
+      'halftoneBlendingMode',
       'toggleAxis',
       'zoomOut',
       'hoverState',
@@ -684,6 +747,7 @@ export class ShaderGradient {
       o.bloom ? 'b' : '',
       o.grain ? 'g' : '',
       o.chromaticAberration ? 'c' : '',
+      o.halftone ? 'h' : '',
       o.vignette ? 'v' : '',
     ].join('')
   }
@@ -693,6 +757,8 @@ export class ShaderGradient {
   private disposePostProcessing(): void {
     this.grainPass?.dispose()
     this.grainPass = null
+    this.halftonePass?.dispose()
+    this.halftonePass = null
     this.bloomPass?.dispose()
     this.bloomPass = null
     this.vignettePass?.dispose()
@@ -702,6 +768,19 @@ export class ShaderGradient {
     this.composer?.dispose()
     this.composer = null
     this.postSignatureSnapshot = ''
+  }
+
+  private applyHalftoneUniforms(pass: ShaderPass, o: ShaderGradientOptions): void {
+    pass.uniforms.radius.value = o.halftoneRadius
+    pass.uniforms.scatter.value = o.halftoneScatter
+    pass.uniforms.blending.value = o.halftoneBlending
+    pass.uniforms.shape.value = HALFTONE_SHAPE_VALUES[o.halftoneShape] ?? 1
+    pass.uniforms.blendingMode.value = HALFTONE_BLENDING_MODE_VALUES[o.halftoneBlendingMode] ?? 1
+    pass.uniforms.greyscale.value = o.halftoneGreyscale
+    pass.uniforms.rotateR.value = degToRad(o.halftoneAngleR)
+    pass.uniforms.rotateG.value = degToRad(o.halftoneAngleG)
+    pass.uniforms.rotateB.value = degToRad(o.halftoneAngleB)
+    pass.uniforms.disable.value = false
   }
 
   private syncPostProcessing(): void {
@@ -761,6 +840,15 @@ export class ShaderGradient {
         this.grainPass = grainPass
       }
 
+      if (o.halftone) {
+        const halftonePass = new ShaderPass(HALFTONE_SHADER)
+        halftonePass.uniforms.width.value = width
+        halftonePass.uniforms.height.value = height
+        this.applyHalftoneUniforms(halftonePass, o)
+        composer.addPass(halftonePass)
+        this.halftonePass = halftonePass
+      }
+
       if (o.vignette) {
         const vignettePass = new ShaderPass(VIGNETTE_SHADER)
         vignettePass.uniforms.strength.value = o.vignetteStrength
@@ -791,6 +879,12 @@ export class ShaderGradient {
       this.grainPass.uniforms.height.value = height
       this.grainPass.uniforms.blending.value = o.grainBlending
       this.grainPass.uniforms.disable.value = false
+    }
+
+    if (this.halftonePass) {
+      this.halftonePass.uniforms.width.value = width
+      this.halftonePass.uniforms.height.value = height
+      this.applyHalftoneUniforms(this.halftonePass, o)
     }
 
     if (this.vignettePass) {
