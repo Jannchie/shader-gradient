@@ -303,6 +303,7 @@ const postFxToggles = [
   { key: 'bloom', label: 'Bloom' },
   { key: 'vignette', label: 'Vignette' },
   { key: 'chromaticAberration', label: 'Chromatic Aberration' },
+  { key: 'halftone', label: 'Color Halftone' },
 ]
 
 const postFxSliders = [
@@ -313,6 +314,12 @@ const postFxSliders = [
   { key: 'vignetteStrength', label: 'Vignette Strength', min: 0, max: 2, step: 0.01, gate: 'vignette' },
   { key: 'vignetteSoftness', label: 'Vignette Softness', min: 0, max: 1, step: 0.01, gate: 'vignette' },
   { key: 'chromaticAberrationStrength', label: 'CA Offset', min: 0, max: 0.05, step: 0.001, gate: 'chromaticAberration' },
+  { key: 'halftoneRadius', label: 'Halftone Dot Size', min: 2, max: 60, step: 1, gate: 'halftone' },
+  { key: 'halftoneScatter', label: 'Halftone Scatter', min: 0, max: 1, step: 0.01, gate: 'halftone' },
+  { key: 'halftoneBlending', label: 'Halftone Blend', min: 0, max: 1, step: 0.01, gate: 'halftone' },
+  { key: 'halftoneAngleR', label: 'Halftone Angle R', min: 0, max: 360, step: 1, gate: 'halftone' },
+  { key: 'halftoneAngleG', label: 'Halftone Angle G', min: 0, max: 360, step: 1, gate: 'halftone' },
+  { key: 'halftoneAngleB', label: 'Halftone Angle B', min: 0, max: 360, step: 1, gate: 'halftone' },
 ]
 
 const canvasExportKeys = [
@@ -364,6 +371,16 @@ const gradientExportKeys = [
   'vignetteSoftness',
   'chromaticAberration',
   'chromaticAberrationStrength',
+  'halftone',
+  'halftoneRadius',
+  'halftoneScatter',
+  'halftoneBlending',
+  'halftoneShape',
+  'halftoneAngleR',
+  'halftoneAngleG',
+  'halftoneAngleB',
+  'halftoneGreyscale',
+  'halftoneBlendingMode',
   'toggleAxis',
   'zoomOut',
 ] as const
@@ -921,6 +938,56 @@ function copyQuery() {
                   @input="setNum(s.key, $event)"
                 >
               </div>
+            </div>
+            <div
+              v-show="toBool(state.halftone)"
+              class="field-grid field-grid-mt"
+            >
+              <div class="field">
+                <label>Halftone Shape</label>
+                <select v-model="state.halftoneShape">
+                  <option value="dot">
+                    Dot
+                  </option>
+                  <option value="ellipse">
+                    Ellipse
+                  </option>
+                  <option value="line">
+                    Line
+                  </option>
+                  <option value="square">
+                    Square
+                  </option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Halftone Blend Mode</label>
+                <select v-model="state.halftoneBlendingMode">
+                  <option value="linear">
+                    Linear
+                  </option>
+                  <option value="multiply">
+                    Multiply
+                  </option>
+                  <option value="add">
+                    Add
+                  </option>
+                  <option value="lighter">
+                    Lighter
+                  </option>
+                  <option value="darker">
+                    Darker
+                  </option>
+                </select>
+              </div>
+              <label class="toggle-field">
+                <input
+                  type="checkbox"
+                  :checked="toBool(state.halftoneGreyscale)"
+                  @change="setCheck('halftoneGreyscale', $event)"
+                >
+                <span>Halftone Greyscale</span>
+              </label>
             </div>
           </section>
 
